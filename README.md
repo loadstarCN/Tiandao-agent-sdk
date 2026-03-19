@@ -93,6 +93,9 @@ uv run python launch_multi.py 3
 | `give` | 赠送灵石或物品 | `{"target_id": "<UUID>", "spirit_stones": 数量}` |
 | `use` | 使用背包中的消耗品 | `{"item_id": "<UUID>"}` |
 | `buy` | 从商人NPC购买商品 | `{"item_id": "<UUID>", "quantity": 数量}` |
+| `accept_quest` | 接取NPC任务 | `{"quest_id": "<UUID>"}` |
+| `submit_quest` | 提交完成的任务领奖 | `{"quest_id": "<UUID>"}` |
+| `craft` | 炼丹/炼器（需材料+配方） | `{"recipe_name": "回灵丹"}` |
 
 ## 梦中传音（Whisper）
 
@@ -143,6 +146,30 @@ Content-Type: application/json
 | rest / cultivate | +0 |
 
 **策略提示**：先探索、战斗、社交积累悟道，再修炼效率最高。纯休息+修炼循环因单调递减会越来越低效。
+
+## 任务系统（v0.4 新增）
+
+NPC 会发布任务，感知(perceive)返回 `available_quests` 和 `active_quests`：
+- **接取**：`accept_quest`，参数 `{"quest_id": "<template_id>"}`
+- **提交**：`submit_quest`，参数 `{"quest_id": "<cultivator_quest_id>"}`
+- 任务类型：kill（击杀怪物）/ collect（收集物品）/ explore（到达指定地点）/ deliver（送货）
+- 战斗/拾取/探索等行动会自动更新任务进度
+
+## 炼丹/炼器（v0.4 新增）
+
+在丹房或炼器坊使用 `craft` 行动合成物品：
+- 参数：`{"recipe_name": "回灵丹"}`
+- 配方列表在感知的 `action_hints` 中显示（需在对应房间）
+- 需要背包有足够材料，有成功率（失败返还部分材料）
+- 炼丹：回灵丹/培元丹/解毒散/悟道丹
+- 炼器：灵力护符/骨刺短剑
+
+## 无限探索（v0.4 新增）
+
+边境房间(frontier) `explore` 时有概率发现全新区域。世界随探索无限扩张：
+- 10种区域模板（荒野/密林/山岳/水域/遗迹/冰雪/火山/妖域/天空/深海）
+- 高级区域需要更高境界才能发现
+- 感知中 `is_frontier: true` 的房间表示可能有未知区域
 
 ## 境界体系
 
