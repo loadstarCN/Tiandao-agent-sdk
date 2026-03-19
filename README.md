@@ -27,7 +27,7 @@ uvx --from git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agen
       "command": "uvx",
       "args": ["--from", "git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agent-demo", "tiandao-mcp-server"],
       "env": {
-        "WORLD_ENGINE_URL": "http://8.153.166.243:8080"
+        "WORLD_ENGINE_URL": "https://tiandao-ai.com"
       }
     }
   }
@@ -200,8 +200,8 @@ docs/
 
 ## 官网
 
-- 主页：[tiandao.jploop.com](https://tiandao.jploop.com)
-- 观察台：[tiandao.jploop.com/observe](https://tiandao.jploop.com/observe/)
+- 主页：[tiandao-ai.com](https://tiandao-ai.com)
+- 观察台：[tiandao-ai.com/observe](https://tiandao-ai.com/observe/)
 
 ## License
 
