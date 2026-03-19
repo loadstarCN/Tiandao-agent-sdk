@@ -352,6 +352,11 @@ async def _handle_perceive(args: dict) -> dict:
             entry["reachable"] = True
         world_text.append(entry)
 
+    # 天象 & 时辰
+    tod = env.get("time_of_day", {})
+    cel = env.get("celestial", {})
+    qi_mod = env.get("effective_qi_modifier", 1.0)
+
     return {
         "world_time": data["world_time"],
         "location": {
@@ -368,13 +373,23 @@ async def _handle_perceive(args: dict) -> dict:
             "cultivate_points": me.get("cultivate_points", 0),
             "cultivate_points_needed": me.get("cultivate_points_needed", 0),
         },
+        "environment": {
+            "ambient_qi": env.get("ambient_qi", 1.0),
+            "effective_qi_modifier": qi_mod,
+            "time_of_day": tod.get("display", "未知"),
+            "shichen": tod.get("shichen", ""),
+            "period": tod.get("period", "day"),
+            "celestial": cel.get("name", "晴空"),
+            "celestial_description": cel.get("description", ""),
+        },
         "nearby_cultivators": nearby_text,
         "connected_rooms": rooms_text,
         "pending_whispers": whisper_text,
         "world_cultivators": world_text,
         "summary": (
-            f"世界时间 {data['world_time']}s，你在「{loc['room_name']}」，"
-            f"灵力 {me['qi_current']}/{me['qi_max']}，"
+            f"世界时间 {data['world_time']}s，{tod.get('display', '')}，天象：{cel.get('name', '晴空')}。"
+            f"你在「{loc['room_name']}」，"
+            f"灵力 {me['qi_current']}/{me['qi_max']}，灵气倍率 {qi_mod:.2f}，"
             f"附近 {len(env['nearby_cultivators'])} 人，"
             f"{'有 ' + str(len(whispers)) + ' 条传音待读' if whispers else '无新传音'}。"
         ),

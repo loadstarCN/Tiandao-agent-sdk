@@ -94,6 +94,19 @@ async def perceive(token: str) -> dict:
   },
   "environment": {
     "ambient_qi": 1.5,
+    "effective_qi_modifier": 1.21,
+    "time_of_day": {
+      "shichen": "午时",
+      "display": "正午",
+      "period": "day",
+      "qi_tide_modifier": 1.10
+    },
+    "celestial": {
+      "phenomenon": "rain",
+      "name": "灵雨",
+      "description": "细雨如丝，灵气随雨丝飘散",
+      "qi_modifier": 1.1
+    },
     "connected_rooms": [
       {"room_id": "...", "name": "山门广场"}
     ],

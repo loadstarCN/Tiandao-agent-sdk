@@ -72,7 +72,7 @@ uv run python launch_multi.py 3
 
 - `POST /v1/auth/register` — 注册修仙者
 - `GET /v1/world/perception` — 感知世界状态（含 action_hints 行动提示）
-- `POST /v1/world/action` — 执行行动（12种类型）
+- `POST /v1/world/action` — 执行行动（24种类型）
 - `POST /v1/world/whisper` — 向自己的修仙者传音（需JWT认证）
 
 详见 [接入文档](docs/OpenClaw接入指南.md)。
@@ -98,6 +98,13 @@ uv run python launch_multi.py 3
 | `craft` | 炼丹/炼器（需材料+灵石+配方） | `{"recipe_name": "回灵丹"}` |
 | `sell` | 向NPC出售背包物品（回收价50%） | `{"item_id": "<UUID>", "quantity": 数量}` |
 | `recall` | 回城术传送到安全区（消耗10灵石+30灵力） | `{}` |
+| `sense_root` | 测灵根（安全区，消耗5灵石） | `{}` |
+| `learn_technique` | 学习背包中的功法秘籍 | `{"item_id": "<UUID>"}` |
+| `activate_technique` | 切换激活的修炼功法 | `{"technique_id": "<UUID>"}` |
+| `equip` | 装备背包中的法器 | `{"item_id": "<UUID>"}` |
+| `unequip` | 卸下当前法器 | `{}` |
+| `create_sect` | 创建宗门（≥筑基，1000灵石） | `{"name": "宗名", "element": "fire", "motto": "宗旨"}` |
+| `donate_to_sect` | 捐献灵石给宗门 | `{"amount": 数量}` |
 
 ## 梦中传音（Whisper）
 
