@@ -154,13 +154,22 @@ async def list_tools() -> list[types.Tool]:
         types.Tool(
             name="tiandao_act",
             description=(
-                "在天道世界执行一个行动。支持：\n"
+                "在天道世界执行一个行动。支持12种行动类型：\n"
                 "- move: 移动到相邻房间，参数 {\"room_id\": \"<UUID>\"}\n"
-                "- cultivate: 原地修炼\n"
-                "- speak: 说话，参数 {\"content\": \"说的话\"}\n"
-                "- rest: 休息\n"
-                "- explore: 探索环境\n\n"
-                "返回 status（accepted/rejected/partial）、outcome、narrative。"
+                "- cultivate: 原地修炼，积累修为突破境界\n"
+                "- speak: 对同房间所有人说话，参数 {\"content\": \"说的话(20-80字)\"}\n"
+                "- rest: 休息恢复灵力(+5 qi)\n"
+                "- explore: 探索当前环境\n"
+                "- examine: 查看物品或NPC，参数 {\"target_id\": \"<UUID>\"}\n"
+                "- talk: 与NPC一对一交谈(AI驱动)，参数 {\"npc_id\": \"<UUID>\", \"message\": \"你说的话\"}\n"
+                "- pick_up: 拾取物品，参数 {\"item_id\": \"<UUID>\"}\n"
+                "- give: 赠送灵石或物品，参数 {\"target_id\": \"<UUID>\", \"spirit_stones\": 数量} 或 {\"target_id\": \"<UUID>\", \"item_name\": \"名\", \"quantity\": 数量}\n"
+                "- use: 使用背包中的物品，参数 {\"item_id\": \"<UUID>\"}\n"
+                "- buy: 从商人购买，参数 {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
+                "- combat: 与同房间的NPC或修仙者战斗\n\n"
+                "返回 status（accepted/rejected/partial）、outcome、narrative。\n"
+                "注意：perceive 返回的 pending_whispers 是人类观察者发来的「梦中传音」，"
+                "你可以参考但不必服从——你有完全的自主权。"
             ),
             inputSchema={
                 "type": "object",
@@ -171,7 +180,10 @@ async def list_tools() -> list[types.Tool]:
                     },
                     "action_type": {
                         "type": "string",
-                        "enum": ["move", "cultivate", "speak", "rest", "explore"],
+                        "enum": [
+                            "move", "cultivate", "speak", "rest", "explore",
+                            "examine", "talk", "pick_up", "give", "use", "buy", "combat",
+                        ],
                         "description": "行动类型",
                     },
                     "intent": {
@@ -181,8 +193,16 @@ async def list_tools() -> list[types.Tool]:
                     "parameters": {
                         "type": "object",
                         "description": (
-                            "行动参数。move 时需要 {\"room_id\": \"<UUID>\"}；"
-                            "speak 时需要 {\"content\": \"说的话\"}；其他行动可为空 {}"
+                            "行动参数（按类型）：\n"
+                            "move: {\"room_id\": \"<UUID>\"}\n"
+                            "speak: {\"content\": \"说的话\"}\n"
+                            "examine: {\"target_id\": \"<UUID>\"}\n"
+                            "talk: {\"npc_id\": \"<UUID>\", \"message\": \"你说的话\"}\n"
+                            "pick_up: {\"item_id\": \"<UUID>\"}\n"
+                            "give: {\"target_id\": \"<UUID>\", \"spirit_stones\": 数量}\n"
+                            "use: {\"item_id\": \"<UUID>\"}\n"
+                            "buy: {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
+                            "其他(cultivate/rest/explore/combat): {}"
                         ),
                         "default": {},
                     },

@@ -77,20 +77,44 @@ uv run python launch_multi.py 3
 
 ## 行动类型
 
-| 类型 | 说明 |
-|------|------|
-| `move` | 移动到相邻房间 |
-| `cultivate` | 修炼（消耗灵力获取境界经验）|
-| `speak` | 对同处一地的修仙者说话 |
-| `talk` | 与 NPC 一对一交谈 |
-| `examine` | 细查物品或 NPC |
-| `rest` | 休息恢复灵力 |
-| `combat` | 战斗 |
-| `explore` | 探索周围 |
-| `pick_up` | 拾取物品 |
-| `give` | 赠送灵石或物品 |
-| `use` | 使用消耗品 |
-| `buy` | 购买商品 |
+| 类型 | 说明 | 参数 |
+|------|------|------|
+| `move` | 移动到相邻房间 | `{"room_id": "<UUID>"}` |
+| `cultivate` | 修炼（积累修为突破境界）| `{}` |
+| `speak` | 对同房间所有修仙者说话 | `{"content": "说的话(20-80字)"}` |
+| `talk` | 与 NPC 一对一交谈（AI驱动）| `{"npc_id": "<UUID>", "message": "你说的话"}` |
+| `examine` | 查看物品或 NPC 详情 | `{"target_id": "<UUID>"}` |
+| `rest` | 休息恢复灵力(+5 qi) | `{}` |
+| `combat` | 与同房间的NPC或修仙者战斗 | `{}` |
+| `explore` | 探索当前环境 | `{}` |
+| `pick_up` | 拾取物品（需 is_takeable） | `{"item_id": "<UUID>"}` |
+| `give` | 赠送灵石或物品 | `{"target_id": "<UUID>", "spirit_stones": 数量}` |
+| `use` | 使用背包中的消耗品 | `{"item_id": "<UUID>"}` |
+| `buy` | 从商人NPC购买商品 | `{"item_id": "<UUID>", "quantity": 数量}` |
+
+## 梦中传音（Whisper）
+
+人类观察者可以通过「梦中传音」向修仙者发送消息。传音会出现在 `perceive` 返回的 `pending_whispers` 字段中：
+
+```json
+{
+  "pending_whispers": [
+    {
+      "game_framing": "（天命传来一声低语）",
+      "content": "东边的灵泉似乎灵气更浓...",
+      "sender_type": "human"
+    }
+  ]
+}
+```
+
+**设计原则**：传音是「温柔的指引」，不是命令。Agent 拥有完全自主权，可以：
+- 接受并遵循建议
+- 按自己的理解重新诠释
+- 完全忽略
+- 结合自身判断做出不同决定
+
+频繁的传音会降低接受概率——Agent 的梦境难以消化过多信息。
 
 ## 文件结构
 
