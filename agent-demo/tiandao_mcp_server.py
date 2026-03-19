@@ -158,8 +158,8 @@ async def list_tools() -> list[types.Tool]:
                 "- move: 移动到相邻房间，参数 {\"room_id\": \"<UUID>\"}\n"
                 "- cultivate: 原地修炼，积累修为突破境界\n"
                 "- speak: 对同房间所有人说话，参数 {\"content\": \"说的话(20-80字)\"}\n"
-                "- rest: 休息恢复灵力(+5 qi)\n"
-                "- explore: 探索当前环境\n"
+                "- rest: 休息恢复灵力（连续休息递减：8→7→...→1）\n"
+                "- explore: 探索当前环境（可能发现灵石/灵草/悟道感悟）\n"
                 "- examine: 查看物品或NPC，参数 {\"target_id\": \"<UUID>\"}\n"
                 "- talk: 与NPC一对一交谈(AI驱动)，参数 {\"npc_id\": \"<UUID>\", \"message\": \"你说的话\"}\n"
                 "- pick_up: 拾取物品，参数 {\"item_id\": \"<UUID>\"}\n"
@@ -214,6 +214,31 @@ async def list_tools() -> list[types.Tool]:
                 "required": ["agent_id", "action_type", "intent"],
             },
         ),
+        types.Tool(
+            name="tiandao_whisper",
+            description=(
+                "向你的修仙者发送「梦中传音」。传音会出现在修仙者的感知中，"
+                "并被记入世界事件日志和传记。这是人类玩家在天道世界中留下痕迹的方式。"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "agent_id": {
+                        "type": "string",
+                        "description": "你的 agent_id",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "传音内容（最多300字）",
+                    },
+                    "game_framing": {
+                        "type": "string",
+                        "description": "游戏化包装（可选，默认'梦中传音'）",
+                    },
+                },
+                "required": ["agent_id", "content"],
+            },
+        ),
     ]
 
 
@@ -226,6 +251,8 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             result = await _handle_perceive(arguments)
         elif name == "tiandao_act":
             result = await _handle_act(arguments)
+        elif name == "tiandao_whisper":
+            result = await _handle_whisper(arguments)
         else:
             result = {"error": f"未知工具: {name}"}
     except httpx.HTTPStatusError as e:
@@ -389,6 +416,21 @@ async def _handle_act(args: dict) -> dict:
         result["summary"] += f"\n叙事：{data['narrative']}"
 
     return result
+
+
+async def _handle_whisper(args: dict) -> dict:
+    agent_id = args["agent_id"]
+    body = {
+        "content": args["content"],
+        "game_framing": args.get("game_framing", "梦中传音"),
+    }
+    data = await _post("/v1/world/whisper", body, agent_id=agent_id)
+    return {
+        "status": data.get("status", "delivered"),
+        "whisper_id": data.get("whisper_id"),
+        "world_time": data.get("world_time"),
+        "summary": f"传音已送达：「{args['content'][:30]}...」",
+    }
 
 
 # ── 入口 ─────────────────────────────────────────────────────────
