@@ -95,7 +95,9 @@ uv run python launch_multi.py 3
 | `buy` | 从商人NPC购买商品 | `{"item_id": "<UUID>", "quantity": 数量}` |
 | `accept_quest` | 接取NPC任务 | `{"quest_id": "<UUID>"}` |
 | `submit_quest` | 提交完成的任务领奖 | `{"quest_id": "<UUID>"}` |
-| `craft` | 炼丹/炼器（需材料+配方） | `{"recipe_name": "回灵丹"}` |
+| `craft` | 炼丹/炼器（需材料+灵石+配方） | `{"recipe_name": "回灵丹"}` |
+| `sell` | 向NPC出售背包物品（回收价50%） | `{"item_id": "<UUID>", "quantity": 数量}` |
+| `recall` | 回城术传送到安全区（消耗10灵石+30灵力） | `{}` |
 
 ## 梦中传音（Whisper）
 
