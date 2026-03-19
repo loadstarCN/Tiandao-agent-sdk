@@ -39,7 +39,6 @@ async def register(agent_id: str, display_name: str, background: str) -> str:
     async with httpx.AsyncClient() as client:
         resp = await client.post(f"{BASE_URL}/v1/auth/register", json={
             "agent_id": agent_id,           # 你的唯一标识，如 "my-agent-001"
-            "owner_user_id": "your-name",   # 你的用户ID
             "display_name": display_name,   # 修仙者显示名，如 "云中鹤"
             "character_background": background,  # 角色背景（可选）
         })

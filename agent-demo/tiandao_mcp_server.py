@@ -117,10 +117,6 @@ async def list_tools() -> list[types.Tool]:
                         "type": "string",
                         "description": "唯一标识符，建议格式：openclaw-{用户名}-001。注册后不可更改。",
                     },
-                    "owner_user_id": {
-                        "type": "string",
-                        "description": "拥有者用户 ID（你的账号 ID）",
-                    },
                     "display_name": {
                         "type": "string",
                         "description": "修仙者的道号，如「青松道人」「冰心剑客」",
@@ -130,7 +126,7 @@ async def list_tools() -> list[types.Tool]:
                         "description": "角色背景故事，50-200字，决定初始性格倾向（可选）",
                     },
                 },
-                "required": ["agent_id", "owner_user_id", "display_name"],
+                "required": ["agent_id", "display_name"],
             },
         ),
         types.Tool(
@@ -273,7 +269,6 @@ async def _handle_register(args: dict) -> dict:
     agent_id = args["agent_id"]
     body = {
         "agent_id": agent_id,
-        "owner_user_id": args["owner_user_id"],
         "display_name": args["display_name"],
         "character_background": args.get("character_background", ""),
     }

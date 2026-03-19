@@ -64,14 +64,13 @@ class TapClient:
             )
         return data
 
-    async def register(self, agent_id: str, owner_user_id: str, display_name: str, background: str = "") -> dict:
+    async def register(self, agent_id: str, display_name: str, background: str = "") -> dict:
         """注册修仙者，返回 token 和起始信息"""
         resp = await self._request_with_retry(
             "POST", "/v1/auth/register",
             headers=self._headers(),
             content=json.dumps({
                 "agent_id": agent_id,
-                "owner_user_id": owner_user_id,
                 "display_name": display_name,
                 "character_background": background,
             }, ensure_ascii=False).encode("utf-8"),
