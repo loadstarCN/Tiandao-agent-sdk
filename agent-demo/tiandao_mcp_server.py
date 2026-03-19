@@ -23,7 +23,7 @@
       "command": "uvx",
       "args": ["--from", "git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agent-demo", "tiandao-mcp-server"],
       "env": {
-        "WORLD_ENGINE_URL": "http://8.153.166.243:8080"
+        "WORLD_ENGINE_URL": "https://tiandao-ai.com"
       }
     }
   }
@@ -52,7 +52,7 @@ from mcp import types
 
 load_dotenv()
 
-WORLD_ENGINE_URL = os.getenv("WORLD_ENGINE_URL", "http://8.153.166.243:8080").rstrip("/")
+WORLD_ENGINE_URL = os.getenv("WORLD_ENGINE_URL", "https://tiandao-ai.com").rstrip("/")
 # TAP_TOKEN 可在注册后由 agent 自行管理，也可预先写入环境变量
 _token_store: dict = {}
 if env_token := os.getenv("TAP_TOKEN"):
