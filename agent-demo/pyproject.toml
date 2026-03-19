@@ -1,13 +1,25 @@
 [project]
-name = "agent-demo"
+name = "tiandao-mcp-server"
 version = "0.1.0"
-description = "Add your description here"
+description = "天道AI修仙世界 MCP Server — 通过TAP协议让AI Agent接入天道世界"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.84.0",
     "httpx>=0.28.1",
-    "openai>=2.28.0",
+    "mcp>=1.0.0",
     "python-dotenv>=1.2.2",
+]
+
+[project.scripts]
+tiandao-mcp-server = "tiandao_mcp_server:run"
+
+[project.optional-dependencies]
+agent = [
+    "anthropic>=0.84.0",
+    "openai>=2.28.0",
     "pyyaml>=6.0.3",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.backends"

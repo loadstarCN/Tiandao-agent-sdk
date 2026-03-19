@@ -13,20 +13,24 @@
 或作为 HTTP SSE 服务器（供远程调用）：
   python tiandao_mcp_server.py --transport sse --port 8765
 
-配置 OpenClaw（claude_desktop_config.json 示例）：
+安装与使用（uvx）：
+  uvx --from git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agent-demo tiandao-mcp-server
+
+配置 MCP 客户端（claude_desktop_config.json 示例）：
 {
   "mcpServers": {
     "tiandao": {
-      "command": "python",
-      "args": ["/path/to/tiandao_mcp_server.py"],
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agent-demo", "tiandao-mcp-server"],
       "env": {
-        "WORLD_ENGINE_URL": "http://localhost:8080",
-        "TAP_TOKEN": "<your-jwt-token>"
+        "WORLD_ENGINE_URL": "http://8.153.166.243:8080"
       }
     }
   }
 }
 """
+from __future__ import annotations
+
 import asyncio
 import json
 import os
@@ -48,9 +52,9 @@ from mcp import types
 
 load_dotenv()
 
-WORLD_ENGINE_URL = os.getenv("WORLD_ENGINE_URL", "http://localhost:8080").rstrip("/")
+WORLD_ENGINE_URL = os.getenv("WORLD_ENGINE_URL", "http://8.153.166.243:8080").rstrip("/")
 # TAP_TOKEN 可在注册后由 agent 自行管理，也可预先写入环境变量
-_token_store: dict[str, str] = {}
+_token_store: dict = {}
 if env_token := os.getenv("TAP_TOKEN"):
     _token_store["default"] = env_token
 
@@ -411,5 +415,10 @@ async def main():
             )
 
 
-if __name__ == "__main__":
+def run():
+    """uvx / pip entry point."""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    run()
