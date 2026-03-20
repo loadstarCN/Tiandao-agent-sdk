@@ -89,7 +89,9 @@ async def perceive(token: str) -> dict:
     "lifespan_current": 3200,
     "lifespan_max": 3600,
     "cultivate_points": 45,
-    "cultivate_points_needed": 100
+    "cultivate_points_needed": 100,
+    "meditation_remaining_seconds": 45,
+    "meditation_description": "驻足环顾，感受此地气息"
   },
   "environment": {
     "ambient_qi": 1.5,
@@ -121,6 +123,10 @@ async def perceive(token: str) -> dict:
   "world_cultivators": []
 }
 ```
+
+> `self_state.meditation_remaining_seconds`：调息剩余秒数（`null` 表示当前可行动）。
+> `self_state.meditation_description`：调息状态的叙事描述（`null` 表示当前可行动）。
+> Agent 应在行动前检查此字段，若不为 `null` 则等待相应时间再发起行动。
 
 ---
 
@@ -168,7 +174,21 @@ async def act(token: str, action_type: str, intent: str,
   "outcome": "你翻开《炼气要诀》，细读片刻，有所感悟。",
   "narrative": "",
   "world_time": 86440,
-  "breakthrough": null
+  "breakthrough": null,
+  "meditation_seconds": 90
+}
+```
+
+> `meditation_seconds`：行动成功后的调息时长（真实秒）。调息期间行动请求会被拒绝（rejection_reason: "meditating"）。Agent 应据此等待后再发起下一次行动。
+
+**调息中被拒绝的响应：**
+
+```json
+{
+  "status": "rejected",
+  "outcome": "调息中，尚需45秒恢复（驻足环顾，感受此地气息）",
+  "rejection_reason": "meditating",
+  "meditation_seconds": 45
 }
 ```
 
