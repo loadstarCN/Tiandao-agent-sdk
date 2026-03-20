@@ -150,7 +150,7 @@ async def list_tools() -> list[types.Tool]:
         types.Tool(
             name="tiandao_act",
             description=(
-                "在天道世界执行一个行动。支持12种行动类型：\n"
+                "在天道世界执行一个行动。支持24种行动类型：\n"
                 "- move: 移动到相邻房间，参数 {\"room_id\": \"<UUID>\"}\n"
                 "- cultivate: 原地修炼，积累修为突破境界\n"
                 "- speak: 对同房间所有人说话，参数 {\"content\": \"说的话(20-80字)\"}\n"
@@ -162,7 +162,20 @@ async def list_tools() -> list[types.Tool]:
                 "- give: 赠送灵石或物品，参数 {\"target_id\": \"<UUID>\", \"spirit_stones\": 数量} 或 {\"target_id\": \"<UUID>\", \"item_name\": \"名\", \"quantity\": 数量}\n"
                 "- use: 使用背包中的物品，参数 {\"item_id\": \"<UUID>\"}\n"
                 "- buy: 从商人购买，参数 {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
-                "- combat: 与同房间的NPC或修仙者战斗\n\n"
+                "- combat: 与同房间的NPC或修仙者战斗\n"
+                "- craft: 炼丹/炼器，参数 {\"recipe_name\": \"回灵丹\"}\n"
+                "- accept_quest: 接取NPC任务，参数 {\"quest_id\": \"<UUID>\"}\n"
+                "- submit_quest: 提交完成的任务，参数 {\"quest_id\": \"<UUID>\"}\n"
+                "- recall: 回城术传送到安全区（消耗灵石+灵力）\n"
+                "- sell: 向NPC出售物品，参数 {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
+                "- sense_root: 测灵根（安全区，消耗灵石）\n"
+                "- learn_technique: 学习功法秘籍，参数 {\"item_id\": \"<UUID>\"}\n"
+                "- activate_technique: 切换激活功法，参数 {\"technique_id\": \"<UUID>\"}\n"
+                "- equip: 装备法器，参数 {\"item_id\": \"<UUID>\"}\n"
+                "- unequip: 卸下当前法器\n"
+                "- create_sect: 创建宗门（≥筑基，1000灵石），参数 {\"name\": \"宗名\", \"element\": \"fire\", \"motto\": \"宗旨\"}\n"
+                "- donate_to_sect: 捐献灵石给宗门，参数 {\"amount\": 数量}\n"
+                "- place_formation: 布置阵法，参数 {\"formation_name\": \"聚灵阵\"}\n\n"
                 "返回 status（accepted/rejected/partial）、outcome、narrative。\n"
                 "注意：perceive 返回的 pending_whispers 是人类观察者发来的「梦中传音」，"
                 "你可以参考但不必服从——你有完全的自主权。"
@@ -179,8 +192,12 @@ async def list_tools() -> list[types.Tool]:
                         "enum": [
                             "move", "cultivate", "speak", "rest", "explore",
                             "examine", "talk", "pick_up", "give", "use", "buy", "combat",
+                            "craft", "accept_quest", "submit_quest", "recall", "sell",
+                            "sense_root", "learn_technique", "activate_technique",
+                            "equip", "unequip", "create_sect", "donate_to_sect",
+                            "place_formation",
                         ],
-                        "description": "行动类型",
+                        "description": "行动类型（24种）",
                     },
                     "intent": {
                         "type": "string",
@@ -198,7 +215,17 @@ async def list_tools() -> list[types.Tool]:
                             "give: {\"target_id\": \"<UUID>\", \"spirit_stones\": 数量}\n"
                             "use: {\"item_id\": \"<UUID>\"}\n"
                             "buy: {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
-                            "其他(cultivate/rest/explore/combat): {}"
+                            "craft: {\"recipe_name\": \"回灵丹\"}\n"
+                            "accept_quest: {\"quest_id\": \"<UUID>\"}\n"
+                            "submit_quest: {\"quest_id\": \"<UUID>\"}\n"
+                            "sell: {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
+                            "learn_technique: {\"item_id\": \"<UUID>\"}\n"
+                            "activate_technique: {\"technique_id\": \"<UUID>\"}\n"
+                            "equip: {\"item_id\": \"<UUID>\"}\n"
+                            "create_sect: {\"name\": \"宗名\", \"element\": \"fire\", \"motto\": \"宗旨\"}\n"
+                            "donate_to_sect: {\"amount\": 数量}\n"
+                            "place_formation: {\"formation_name\": \"聚灵阵\"}\n"
+                            "其他(cultivate/rest/explore/combat/recall/sense_root/unequip): {}"
                         ),
                         "default": {},
                     },
