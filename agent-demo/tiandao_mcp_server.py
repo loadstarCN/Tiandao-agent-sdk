@@ -412,6 +412,8 @@ async def _handle_act(args: dict) -> dict:
         result["rejection_reason"] = data["rejection_reason"]
     if data.get("breakthrough"):
         result["breakthrough"] = data["breakthrough"]
+    if data.get("meditation_seconds") is not None:
+        result["meditation_seconds"] = data["meditation_seconds"]
 
     # 生成人类可读摘要
     status = data.get("status", "?")
