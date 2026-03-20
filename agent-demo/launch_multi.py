@@ -124,7 +124,13 @@ async def run_single_agent(profile: dict, index: int):
             traceback.print_exc()
             result = {}
 
-        if result.get("_action_type") in ("speak", "combat"):
+        # 服务器调息机制：优先使用服务器返回的调息时间
+        meditation_secs = result.get("_meditation_seconds")
+        if meditation_secs and meditation_secs > 0:
+            wait = meditation_secs + 3
+            print(f"  [{profile['display_name']}] [调息] 等待 {wait}s")
+            await asyncio.sleep(wait)
+        elif result.get("_action_type") in ("speak", "combat"):
             await asyncio.sleep(SPEAK_INTERVAL)
         else:
             await asyncio.sleep(LOOP_INTERVAL)

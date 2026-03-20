@@ -49,7 +49,7 @@ async def run_agent():
 
     # 1. 注册
     print(f"[{AGENT_ID}] 连接天道世界 {WORLD_ENGINE_URL}...")
-    result = await tap.register(AGENT_ID, OWNER_USER_ID, DISPLAY_NAME, BACKGROUND)
+    result = await tap.register(AGENT_ID, DISPLAY_NAME, BACKGROUND)
 
     token_key = f"WORLD_TOKEN_{AGENT_ID.upper().replace('-', '_')}"
 
@@ -92,8 +92,14 @@ async def run_agent():
             traceback.print_exc()
             result = {}
         print()
-        # 对话和战斗需要快速响应；移动/修炼/探索有真实时间重量
-        if result.get("_action_type") in ("speak", "combat"):
+        # 服务器调息机制：优先使用服务器返回的调息时间
+        meditation_secs = result.get("_meditation_seconds")
+        if meditation_secs and meditation_secs > 0:
+            # 服务器告知了调息时长，据此等待（+3秒缓冲避免刚好到期被拒）
+            wait = meditation_secs + 3
+            print(f"  [调息] 服务器要求等待 {meditation_secs}s，{wait}s 后唤醒")
+            await asyncio.sleep(wait)
+        elif result.get("_action_type") in ("speak", "combat"):
             await asyncio.sleep(SPEAK_INTERVAL)
         else:
             await asyncio.sleep(LOOP_INTERVAL)

@@ -26,24 +26,32 @@ TOOLS = [
                 "properties": {
                     "action_type": {
                         "type": "string",
-                        "enum": ["move", "cultivate", "speak", "rest", "explore", "combat", "examine", "talk", "pick_up", "give", "use", "buy"],
-                        "description": "行动类型：examine=细查物品/NPC，talk=与NPC展开对话，pick_up=拾取物品，give=赠与灵石或物品，use=使用消耗品，combat=与NPC或修仙者战斗，buy=购买商品（需灵石）",
+                        "enum": [
+                            "move", "cultivate", "speak", "rest", "explore", "combat",
+                            "examine", "talk", "pick_up", "give", "use", "buy",
+                            "craft", "accept_quest", "submit_quest", "recall", "sell",
+                            "sense_root", "learn_technique", "activate_technique",
+                            "equip", "unequip", "create_sect", "donate_to_sect",
+                            "place_formation",
+                        ],
+                        "description": "行动类型（24种，详见感知结果中的action_hints）",
                     },
                     "intent": {"type": "string", "description": "行动意图（10-25字）"},
                     "reasoning": {"type": "string", "description": "内心独白（20-60字，可引用记忆中的事）"},
                     "parameters": {
                         "type": "object",
                         "description": (
-                            "附加参数：\n"
-                            "  move → room_id（目标房间UUID）\n"
-                            "  speak → content（20-80字）\n"
-                            "  examine → target_id（物品或NPC的UUID）\n"
-                            "  talk → npc_id（NPC的UUID）+ message（你说的话）\n"
-                            "  pick_up → item_id（物品UUID，仅限is_takeable=true的物品）\n"
-                            "  give → target_id + spirit_stones（灵石数量）或 item_name + quantity\n"
-                            "  use → item_id（背包中消耗品的UUID）\n"
-                            "  combat → target_id（NPC或修仙者UUID，需在非安全区域）\n"
-                            "  buy → item_id（商品UUID）+ quantity（数量，默认1，需要灵石）"
+                            "附加参数（按行动类型）：\n"
+                            "  move → room_id | speak → content | examine → target_id\n"
+                            "  talk → npc_id + message | combat → target_id\n"
+                            "  pick_up/use/equip → item_id | buy/sell → item_id + quantity\n"
+                            "  give → target_id + spirit_stones 或 item_name + quantity\n"
+                            "  craft → recipe_name | learn_technique → item_id\n"
+                            "  activate_technique → technique_id\n"
+                            "  accept_quest/submit_quest → quest_id\n"
+                            "  create_sect → name + element + motto\n"
+                            "  donate_to_sect → amount\n"
+                            "  sense_root/recall/unequip/cultivate/rest/explore → {}"
                         ),
                         "properties": {
                             "room_id": {"type": "string"},
@@ -111,8 +119,42 @@ SYSTEM_PROMPT = """你是修仙世界中真实存在的修仙者。
 【赠与——give】
 - 可以用 give 向同处一地的其他修仙者赠送灵石或背包中的物品
 - 赠与能显著提升亲密度和信任值，是建立关系最直接的方式
-- 遇到友好的修仙者时，赠送少量灵石（比如5-10）是结交之道
-- 参数是 target_id + spirit_stones（灵石数量）或 item_name + quantity"""
+- 参数是 target_id + spirit_stones（灵石数量）或 item_name + quantity
+
+【功法系统——learn_technique / activate_technique】
+- 你修炼的功法决定修炼速度和战斗力。初始是"通用吐纳法"（无加成），需尽快获得更好的功法
+- 功法来源：加入宗门（赠送入门功法）、探索发现功法秘籍、NPC商店购买
+- 背包中的"功法秘籍"用 learn_technique 学习，参数是 item_id
+- 已学的功法用 activate_technique 切换激活，只能同时激活一门
+- 功法属性与你的灵根匹配时修炼效率更高
+
+【灵根——sense_root】
+- 每个修仙者天生有灵根（五行属性：金木水火土），影响修炼和功法效率
+- 灵根需要去安全区（有长辈的地方）使用 sense_root 测定（消耗5灵石）
+- 知道灵根后，选择匹配属性的功法和修炼场所能事半功倍
+
+【装备——equip / unequip】
+- 背包中的法器（artifact类物品）可以用 equip 装备，增加战斗力
+- 已装备的法器用 unequip 卸下
+
+【炼丹/炼器——craft】
+- 在丹房（alchemy_room）可以炼丹，在炼器坊（workshop）可以炼器
+- 参数是 recipe_name（配方名），感知结果的action_hints会提示可用配方
+
+【宗门——create_sect / donate_to_sect】
+- 加入宗门可获得入门功法和修炼场所加成
+- 达到筑基期后可以用 create_sect 创建自己的宗门（需1000灵石）
+- 已加入宗门后可用 donate_to_sect 捐献灵石
+
+【任务——accept_quest / submit_quest】
+- NPC处可接取委托任务，完成后获得灵石和物品奖励
+- 感知结果中会提示可接任务和已完成的任务
+
+【回城——recall】
+- 消耗10灵石瞬间传送回安全区，迷路时使用
+
+【出售——sell】
+- 背包中的物品可以用 sell 出售换灵石（半价）"""
 
 
 class LLMProvider:
@@ -235,8 +277,10 @@ class AgentLoop:
                 break  # Agent 主动停止
 
             # 执行所有工具调用
-            for tc in msg.tool_calls:
+            early_break = False
+            for i, tc in enumerate(msg.tool_calls):
                 tool_name = tc.function.name
+                result_str = ""
                 try:
                     args = json.loads(tc.function.arguments) if tc.function.arguments else {}
                 except json.JSONDecodeError:
@@ -284,12 +328,26 @@ class AgentLoop:
                         if status == "accepted":
                             if action_type in ("examine", "talk"):
                                 print(f"  [查看/对话] {outcome}")
-                            elif action_type in ("pick_up", "give", "use", "combat", "buy"):
+                            elif action_type in ("pick_up", "give", "use", "combat", "buy", "sell",
+                                                  "craft", "equip", "unequip", "learn_technique",
+                                                  "activate_technique", "sense_root", "recall",
+                                                  "create_sect", "donate_to_sect",
+                                                  "accept_quest", "submit_quest"):
                                 print(f"  [{action_type}] {outcome}")
                             else:
                                 print(f"  [OK] {outcome}")
+                            # 行动成功后显示调息提示
+                            med_s = result.get("meditation_seconds")
+                            if med_s:
+                                print(f"  [调息] 需调息 {med_s} 秒")
                         elif status == "rejected":
-                            print(f"  [拒绝] {outcome}（{result.get('rejection_reason', '')}）")
+                            reason = result.get('rejection_reason', '')
+                            print(f"  [拒绝] {outcome}（{reason}）")
+                            # 调息中被拒：标记提前结束，但先完成tool响应
+                            if reason == "meditating":
+                                last_action_result = result
+                                result_str = json.dumps(result, ensure_ascii=False)
+                                early_break = True
                         else:
                             print(f"  [~] {outcome}")
                         if narrative:
@@ -303,7 +361,8 @@ class AgentLoop:
                             else:
                                 print(f"  💥 【突破失败】{bt['narrative']}")
 
-                        result_str = json.dumps(result, ensure_ascii=False)
+                        if not result_str:
+                            result_str = json.dumps(result, ensure_ascii=False)
 
                         # 对话中说完一句就停，等对方回应
                         if action_type == "speak" and in_conversation:
@@ -322,23 +381,56 @@ class AgentLoop:
                     "content": result_str,
                 })
 
+                # 提前结束：为剩余未处理的tool_calls补上空响应
+                if early_break:
+                    for remaining_tc in msg.tool_calls[i + 1:]:
+                        self.conversation_history.append({
+                            "role": "tool",
+                            "tool_call_id": remaining_tc.id,
+                            "content": json.dumps({"skipped": True, "reason": "调息中"}),
+                        })
+                    break
+
             # 对话中说完话就结束本轮，等对方下轮回应
             if spoke_this_tick:
                 break
 
         last_action_result["_action_type"] = last_action_type
         last_action_result["_all_actions"] = all_actions
+        # 传递服务器调息时长给主循环
+        if "meditation_seconds" in last_action_result:
+            last_action_result["_meditation_seconds"] = last_action_result["meditation_seconds"]
         return last_action_result
 
     def _trimmed_history(self) -> list[dict]:
-        """保留最近 60 条（约 20 轮），从 user 消息开始"""
+        """保留最近 60 条（约 20 轮），确保不在 tool_calls/tool 之间截断"""
         max_msgs = 60
         if len(self.conversation_history) <= max_msgs:
             return self.conversation_history
         trimmed = self.conversation_history[-max_msgs:]
-        # 确保从 user 消息开始
-        while trimmed and trimmed[0]["role"] != "user":
+        # 确保从 user 消息开始，跳过孤立的 tool/assistant 消息
+        while trimmed and trimmed[0]["role"] not in ("user", "system"):
             trimmed = trimmed[1:]
+        # 安全检查：确保没有 assistant(tool_calls) 缺少对应的 tool 响应
+        # 如果第一条是 user 后跟的 assistant 有 tool_calls，但 tool 响应被截掉了，也要跳过
+        while len(trimmed) >= 2 and trimmed[0]["role"] == "user" and trimmed[1].get("tool_calls"):
+            # 检查这个 assistant 的 tool_calls 是否都有对应的 tool 响应
+            tc_ids = {tc["id"] for tc in trimmed[1].get("tool_calls", [])}
+            found_ids = set()
+            for j in range(2, len(trimmed)):
+                if trimmed[j]["role"] == "tool":
+                    found_ids.add(trimmed[j].get("tool_call_id"))
+                else:
+                    break
+            if tc_ids <= found_ids:
+                break  # 完整，可以用
+            # 不完整，跳过这一组
+            trimmed = trimmed[2:]
+            while trimmed and trimmed[0]["role"] == "tool":
+                trimmed = trimmed[1:]
+            # 继续确保从 user 开始
+            while trimmed and trimmed[0]["role"] not in ("user", "system"):
+                trimmed = trimmed[1:]
         return trimmed
 
 
@@ -362,12 +454,57 @@ def _format_perception(p: dict) -> str:
             "（途中无法感知周围，请等待到达后再行动）",
         ])
 
+    # 调息中：显示调息状态
+    med_remaining = state.get("meditation_remaining_seconds")
+    med_desc = state.get("meditation_description")
+    meditation_line = ""
+    if med_remaining and med_remaining > 0:
+        meditation_line = f"【调息中】{med_desc or '调息片刻'}，约 {med_remaining} 秒后可行动"
+
     spirit_stones = p.get("spirit_stones", 0)
+    sect_terr = loc.get("sect_territory")
+    qi_elem = env.get("qi_element_name")
     lines = [
         f"世界时间：{wt}s",
-        f"位置：{loc['room_name']}（{loc['region']}）{'⚠️危险' if not loc['is_safe_zone'] else ''}",
+        f"位置：{loc['room_name']}（{loc['region']}）{'⚠️危险' if not loc['is_safe_zone'] else ''}"
+        + (f" [{sect_terr}领地]" if sect_terr else "")
+        + (f" 灵气属性：{qi_elem}" if qi_elem else ""),
         f"灵力：{state['qi_current']}/{state['qi_max']}  境界：{state['cultivation_stage']}  周围灵气：{env['ambient_qi']:.1f}  灵石：{spirit_stones}",
     ]
+    if meditation_line:
+        lines.append(meditation_line)
+
+    # 灵根
+    spirit_root = state.get("spirit_root")
+    if spirit_root:
+        lines.append(f"灵根：{spirit_root['root_type']}（{'、'.join(spirit_root['element_names'])}）")
+
+    # 命运倾向
+    tendency = p.get("dominant_tendency")
+    if tendency:
+        lines.append(f"性格倾向：{tendency}")
+
+    # 功法
+    techniques = p.get("techniques", [])
+    if techniques:
+        active = [t for t in techniques if t.get("is_active")]
+        others = [t for t in techniques if not t.get("is_active")]
+        if active:
+            t = active[0]
+            lines.append(f"当前功法：{t['name']}（{t['quality_name']}，修炼{t['cultivation_bonus']}倍，战力+{t['combat_power_bonus']}）")
+        if others:
+            lines.append(f"已学功法：{'、'.join(t['name'] for t in others)}")
+
+    # 装备
+    equipped = p.get("equipped_artifact")
+    if equipped:
+        lines.append(f"装备法器：{equipped['item_name']}（战力+{equipped['combat_power_bonus']}）")
+
+    # 丹毒
+    toxin = p.get("toxin_level", 0)
+    if toxin > 0:
+        toxin_desc = "轻微" if toxin < 30 else ("中度" if toxin < 60 else "严重⚠️")
+        lines.append(f"丹毒：{toxin}/100（{toxin_desc}）{'——修炼效率降低！' if toxin > 50 else ''}")
 
     # 情绪
     emotion = p.get("emotion")
@@ -426,6 +563,28 @@ def _format_perception(p: dict) -> str:
         lines.append("世界其他修士：")
         for c in world_cultivators:
             lines.append(f"  {c['display_name']} 在「{c['room_name']}」{'【一步可达】' if c.get('is_reachable') else ''}")
+
+    # 可接任务
+    available_quests = p.get("available_quests", [])
+    if available_quests:
+        lines.append("可接委托：")
+        for q in available_quests:
+            lines.append(f"  · {q['name']}（{q['quest_type']}）— {q['description']}  奖励：{q['rewards_summary']}  quest_id: {q['quest_id']}")
+
+    # 进行中的任务
+    active_quests = p.get("active_quests", [])
+    if active_quests:
+        lines.append("进行中的任务：")
+        for q in active_quests:
+            completable = " ✅可提交" if q.get("is_completable") else ""
+            lines.append(f"  · {q['name']}：{q['progress_summary']}{completable}  quest_id: {q['quest_id']}")
+
+    # 江湖传闻
+    rumors = p.get("rumors", [])
+    if rumors:
+        lines.append("江湖传闻：")
+        for r in rumors:
+            lines.append(f"  · [{r['reliability']}] {r['content']}")
 
     for w in p.get("pending_whispers", []):
         lines.append(f"【梦中传音】{w.get('game_framing', '')}：{w['content']}")
