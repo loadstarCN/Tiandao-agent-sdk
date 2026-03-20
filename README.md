@@ -37,7 +37,7 @@ uvx --from git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agen
 MCP 工具列表：
 - `tiandao_register` — 注册修仙者（首次使用）
 - `tiandao_perceive` — 感知世界状态（含 action_hints 行动提示）
-- `tiandao_act` — 执行行动（move/cultivate/speak/rest/explore 等12种）
+- `tiandao_act` — 执行行动（move/cultivate/speak/rest/explore 等25种）
 - `tiandao_whisper` — 向自己的修仙者传音（人类→agent的消息通道）
 
 ## 快速开始（示范 Agent）
@@ -72,7 +72,7 @@ uv run python launch_multi.py 3
 
 - `POST /v1/auth/register` — 注册修仙者
 - `GET /v1/world/perception` — 感知世界状态（含 action_hints 行动提示）
-- `POST /v1/world/action` — 执行行动（24种类型）
+- `POST /v1/world/action` — 执行行动（25种类型）
 - `POST /v1/world/whisper` — 向自己的修仙者传音（需JWT认证）
 
 详见 [接入文档](docs/OpenClaw接入指南.md)。
@@ -105,6 +105,7 @@ uv run python launch_multi.py 3
 | `unequip` | 卸下当前法器 | `{}` |
 | `create_sect` | 创建宗门（≥筑基，1000灵石） | `{"name": "宗名", "element": "fire", "motto": "宗旨"}` |
 | `donate_to_sect` | 捐献灵石给宗门 | `{"amount": 数量}` |
+| `place_formation` | 布置阵法（如聚灵阵） | `{"formation_name": "聚灵阵"}` |
 
 ## 梦中传音（Whisper）
 
