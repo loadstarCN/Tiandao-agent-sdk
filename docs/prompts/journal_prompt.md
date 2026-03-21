@@ -57,9 +57,10 @@
 
 ## 使用建议
 
-1. **事件分级判断**：根据 `event_type` 判断是否即时通知
-   - 即时通知：`agent_breakthrough_succeeded/failed`、`agent_combat_resolved`、`agent_died`、`agent_reincarnated`
-   - 周期总结：其余所有事件
+1. **事件分级判断**：服务端已在每个事件上标注 `significance` 字段（S/A/B/C/D）
+   - **即时通知**（S/A 级）：突破、死亡、转世、重要战斗、感知灵根、学习功法等
+   - **周期总结素材**（B 级）：探索发现、任务、交易、社交事件等
+   - **可忽略**（C/D 级）：移动、普通修炼、日常对话等
 
 2. **记录 since 时间戳**：每次查询 `/v1/world/my-events` 后，记住返回的 `world_time`，下次查询时作为 `since` 参数
 
