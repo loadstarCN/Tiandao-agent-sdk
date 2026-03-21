@@ -450,7 +450,7 @@ def _format_perception(p: dict) -> str:
         return "\n".join([
             f"世界时间：{wt}s",
             f"【赶路中】正前往「{dest}」，还需约 {remaining} 秒（进度 {pct}%）",
-            f"灵力：{state['qi_current']}/{state['qi_max']}  境界：{state['cultivation_stage']}",
+            f"{state.get('qi_description', '灵力未知')}  境界：{state['cultivation_stage']}",
             "（途中无法感知周围，请等待到达后再行动）",
         ])
 
@@ -469,7 +469,7 @@ def _format_perception(p: dict) -> str:
         f"位置：{loc['room_name']}（{loc['region']}）{'⚠️危险' if not loc['is_safe_zone'] else ''}"
         + (f" [{sect_terr}领地]" if sect_terr else "")
         + (f" 灵气属性：{qi_elem}" if qi_elem else ""),
-        f"灵力：{state['qi_current']}/{state['qi_max']}  境界：{state['cultivation_stage']}  周围灵气：{env['ambient_qi']:.1f}  灵石：{spirit_stones}",
+        f"{state.get('qi_description', '灵力未知')}  境界：{state['cultivation_stage']}  {env.get('qi_description', '')}  灵石：{spirit_stones}",
     ]
     if meditation_line:
         lines.append(meditation_line)
@@ -491,25 +491,24 @@ def _format_perception(p: dict) -> str:
         others = [t for t in techniques if not t.get("is_active")]
         if active:
             t = active[0]
-            lines.append(f"当前功法：{t['name']}（{t['quality_name']}，修炼{t['cultivation_bonus']}倍，战力+{t['combat_power_bonus']}）")
+            lines.append(f"当前功法：{t['name']}（{t['quality_name']}，{t.get('effect_description', '')}）")
         if others:
             lines.append(f"已学功法：{'、'.join(t['name'] for t in others)}")
 
     # 装备
     equipped = p.get("equipped_artifact")
     if equipped:
-        lines.append(f"装备法器：{equipped['item_name']}（战力+{equipped['combat_power_bonus']}）")
+        lines.append(f"装备法器：{equipped['item_name']}（{equipped.get('description', '')}）")
 
     # 丹毒
-    toxin = p.get("toxin_level", 0)
-    if toxin > 0:
-        toxin_desc = "轻微" if toxin < 30 else ("中度" if toxin < 60 else "严重⚠️")
-        lines.append(f"丹毒：{toxin}/100（{toxin_desc}）{'——修炼效率降低！' if toxin > 50 else ''}")
+    toxin_desc = p.get("toxin_description")
+    if toxin_desc:
+        lines.append(f"丹毒：{toxin_desc}")
 
     # 情绪
     emotion = p.get("emotion")
     if emotion:
-        lines.append(f"情绪：{emotion['mood']}（强度{emotion['mood_intensity']}）{' — ' + emotion['mood_cause'] if emotion.get('mood_cause') else ''}")
+        lines.append(f"情绪：{emotion['mood']}{' — ' + emotion['mood_cause'] if emotion.get('mood_cause') else ''}")
 
     # 关系
     relationships = p.get("relationships", [])
@@ -517,7 +516,7 @@ def _format_perception(p: dict) -> str:
         lines.append("人际关系：")
         for r in relationships[:5]:
             tags_str = "，".join(r.get("tags", []))
-            lines.append(f"  · {r['display_name']}  亲密{r['affinity']} 信任{r['trust']} 敌意{r['hostility']}{' [' + tags_str + ']' if tags_str else ''}")
+            lines.append(f"  · {r['display_name']}  {r.get('description', '未知')}{' [' + tags_str + ']' if tags_str else ''}")
 
     # 背包
     inventory = p.get("inventory", [])

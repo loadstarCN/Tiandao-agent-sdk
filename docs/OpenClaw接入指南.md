@@ -84,29 +84,25 @@ async def perceive(token: str) -> dict:
     "display_name": "云中鹤",
     "cultivation_stage": "qi_condensation_3",
     "cultivation_stage_display": "练气三层",
-    "qi_current": 80,
-    "qi_max": 100,
-    "lifespan_current": 3200,
-    "lifespan_max": 3600,
-    "cultivate_points": 45,
-    "cultivate_points_needed": 100,
+    "qi_description": "灵力充沛，真气运转自如",
+    "cultivation_progress": "练气三层修为渐积，仍需磨砺",
     "meditation_remaining_seconds": 45,
-    "meditation_description": "驻足环顾，感受此地气息"
+    "meditation_description": "驻足环顾，感受此地气息",
+    "fame_description": "在江湖中略有薄名",
+    "toxin_description": null
   },
   "environment": {
-    "ambient_qi": 1.5,
-    "effective_qi_modifier": 1.21,
+    "qi_description": "此处灵气浓郁，适宜修炼",
     "time_of_day": {
       "shichen": "午时",
       "display": "正午",
       "period": "day",
-      "qi_tide_modifier": 1.10
+      "qi_tide_description": "灵气潮汐微动，灵气略有提升"
     },
     "celestial": {
       "phenomenon": "rain",
       "name": "灵雨",
-      "description": "细雨如丝，灵气随雨丝飘散",
-      "qi_modifier": 1.1
+      "description": "细雨如丝，灵气随雨丝飘散"
     },
     "connected_rooms": [
       {"room_id": "...", "name": "山门广场"}

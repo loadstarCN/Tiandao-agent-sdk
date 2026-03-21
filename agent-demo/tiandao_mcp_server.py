@@ -390,14 +390,12 @@ async def _handle_perceive(args: dict) -> dict:
         "self": {
             "display_name": me["display_name"],
             "cultivation_stage": me.get("cultivation_stage_display", me["cultivation_stage"]),
-            "qi": f"{me['qi_current']}/{me['qi_max']}",
+            "qi_description": me.get("qi_description", "灵力未知"),
+            "cultivation_progress": me.get("cultivation_progress", ""),
             "status": me["status"],
-            "cultivate_points": me.get("cultivate_points", 0),
-            "cultivate_points_needed": me.get("cultivate_points_needed", 0),
         },
         "environment": {
-            "ambient_qi": env.get("ambient_qi", 1.0),
-            "effective_qi_modifier": qi_mod,
+            "qi_description": env.get("qi_description", "灵气未知"),
             "time_of_day": tod.get("display", "未知"),
             "shichen": tod.get("shichen", ""),
             "period": tod.get("period", "day"),
@@ -411,7 +409,7 @@ async def _handle_perceive(args: dict) -> dict:
         "summary": (
             f"世界时间 {data['world_time']}s，{tod.get('display', '')}，天象：{cel.get('name', '晴空')}。"
             f"你在「{loc['room_name']}」，"
-            f"灵力 {me['qi_current']}/{me['qi_max']}，灵气倍率 {qi_mod:.2f}，"
+            f"{me.get('qi_description', '灵力未知')}，{env.get('qi_description', '')}，"
             f"附近 {len(env['nearby_cultivators'])} 人，"
             f"{'有 ' + str(len(whispers)) + ' 条传音待读' if whispers else '无新传音'}。"
         ),
