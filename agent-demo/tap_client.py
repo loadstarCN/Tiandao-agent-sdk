@@ -5,6 +5,7 @@ TAP 协议客户端
 import asyncio
 import json
 import logging
+import os
 from typing import Optional
 
 import httpx
@@ -65,10 +66,14 @@ class TapClient:
         return data
 
     async def register(self, agent_id: str, display_name: str, background: str = "", gender: str = "male") -> dict:
-        """注册修仙者，返回 token 和起始信息"""
+        """注册修仙者，返回 token 和起始信息（需要 REGISTER_KEY 环境变量）"""
+        headers = self._headers()
+        register_key = os.environ.get("REGISTER_KEY", "")
+        if register_key:
+            headers["x-register-key"] = register_key
         resp = await self._request_with_retry(
             "POST", "/v1/auth/register",
-            headers=self._headers(),
+            headers=headers,
             content=json.dumps({
                 "agent_id": agent_id,
                 "display_name": display_name,

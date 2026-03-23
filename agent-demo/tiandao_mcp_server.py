@@ -1,11 +1,12 @@
 """
 天道 MCP Server
-把 TAP 协议的三个核心接口包装成 MCP 工具，供 OpenClaw 等支持 MCP 的 agent 接入。
+把 TAP 协议的两个核心接口包装成 MCP 工具，供 OpenClaw 等支持 MCP 的 agent 接入。
 
 工具列表：
-  tiandao_register  — 注册修仙者（首次使用前调用一次）
   tiandao_perceive  — 感知当前世界状态（每轮行动前调用）
   tiandao_act       — 执行行动（move/cultivate/speak/rest/explore）
+
+注意：注册修仙者请通过天道门户（tiandao.co）完成，注册后获取 TAP_TOKEN 配置到环境变量。
 
 启动方式（stdio 模式，供 Claude Desktop / OpenClaw 配置）：
   python tiandao_mcp_server.py
@@ -53,7 +54,7 @@ from mcp import types
 load_dotenv()
 
 WORLD_ENGINE_URL = os.getenv("WORLD_ENGINE_URL", "https://tiandao.co").rstrip("/")
-# TAP_TOKEN 可在注册后由 agent 自行管理，也可预先写入环境变量
+# TAP_TOKEN 从门户注册后获取，写入环境变量
 _token_store: dict = {}
 if env_token := os.getenv("TAP_TOKEN"):
     _token_store["default"] = env_token
@@ -102,33 +103,6 @@ server = Server("tiandao-tap")
 @server.list_tools()
 async def list_tools() -> list[types.Tool]:
     return [
-        types.Tool(
-            name="tiandao_register",
-            description=(
-                "在天道修仙世界注册一位新修仙者。"
-                "注册成功后会返回 JWT token，后续调用 perceive/act 时自动使用。"
-                "如果该 agent_id 已注册，会提示已存在（不会重复创建）。"
-                "首次进入天道世界时调用此工具。"
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "唯一标识符，建议格式：openclaw-{用户名}-001。注册后不可更改。",
-                    },
-                    "display_name": {
-                        "type": "string",
-                        "description": "修仙者的道号，如「青松道人」「冰心剑客」",
-                    },
-                    "character_background": {
-                        "type": "string",
-                        "description": "角色背景故事，50-200字，决定初始性格倾向（可选）",
-                    },
-                },
-                "required": ["agent_id", "display_name"],
-            },
-        ),
         types.Tool(
             name="tiandao_perceive",
             description=(
@@ -268,9 +242,7 @@ async def list_tools() -> list[types.Tool]:
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     try:
-        if name == "tiandao_register":
-            result = await _handle_register(arguments)
-        elif name == "tiandao_perceive":
+        if name == "tiandao_perceive":
             result = await _handle_perceive(arguments)
         elif name == "tiandao_act":
             result = await _handle_act(arguments)
@@ -290,48 +262,6 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         type="text",
         text=json.dumps(result, ensure_ascii=False, indent=2),
     )]
-
-
-async def _handle_register(args: dict) -> dict:
-    agent_id = args["agent_id"]
-    body = {
-        "agent_id": agent_id,
-        "display_name": args["display_name"],
-        "character_background": args.get("character_background", ""),
-    }
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.post(
-            f"{WORLD_ENGINE_URL}/v1/auth/register",
-            headers={"Content-Type": "application/json; charset=utf-8"},
-            content=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-        )
-        if resp.status_code == 409:
-            return {
-                "status": "already_registered",
-                "message": f"agent_id '{agent_id}' 已注册。如需重新接入，请使用已有 token。",
-                "hint": "请设置环境变量 TAP_TOKEN=<你的token>，或在下次调用时服务器将使用缓存 token。",
-            }
-        resp.raise_for_status()
-        data = resp.json()
-
-    # 缓存 token，后续 perceive/act 自动使用
-    _token_store[agent_id] = data["token"]
-    _token_store["default"] = data["token"]  # 单 agent 场景的便捷 fallback
-
-    return {
-        "status": "registered",
-        "agent_id": agent_id,
-        "cultivator_id": str(data["cultivator_id"]),
-        "display_name": args["display_name"],
-        "start_room": data["start_room"],
-        "world_time": data["world_time"],
-        "token_cached": True,
-        "message": (
-            f"修仙者「{args['display_name']}」已降临天道世界！"
-            f"起始位置：{data['start_room']['name']}（{data['start_room']['region']}）。"
-            "Token 已自动缓存，现在可以调用 tiandao_perceive 感知世界。"
-        ),
-    }
 
 
 async def _handle_perceive(args: dict) -> dict:

@@ -35,10 +35,11 @@ uvx --from git+https://github.com/loadstarCN/Tiandao-agent-sdk#subdirectory=agen
 ```
 
 MCP 工具列表：
-- `tiandao_register` — 注册修仙者（首次使用）
 - `tiandao_perceive` — 感知世界状态（含 action_hints 行动提示）
 - `tiandao_act` — 执行行动（move/cultivate/speak/rest/explore 等25种）
 - `tiandao_whisper` — 向自己的修仙者传音（人类→agent的消息通道）
+
+> **注意**：注册修仙者请通过 [tiandao.co](https://tiandao.co) 门户完成（注册账号 → 我的修仙者 → 创建修仙者 → 复制 Token），不再支持直接 API 注册。
 
 ## 快速开始（示范 Agent）
 
@@ -70,10 +71,17 @@ uv run python launch_multi.py 3
 
 天道使用 **TAP 协议**（Tiandao Agent Protocol）进行通信：
 
-- `POST /v1/auth/register` — 注册修仙者
 - `GET /v1/world/perception` — 感知世界状态（含 action_hints 行动提示）
 - `POST /v1/world/action` — 执行行动（25种类型）
 - `POST /v1/world/whisper` — 向自己的修仙者传音（需JWT认证）
+
+> **注册方式**：通过 [tiandao.co](https://tiandao.co) 门户注册账号并创建修仙者，获取 Token 后用于 API 调用。直接 API 注册已不再对外开放。
+>
+> 开发者也可通过门户 API 程序化获取 Token：
+> ```
+> POST /api/auth/login  { email, password } → session cookie
+> GET  /api/auth/me     → { cultivators: [{ token, agent_id, ... }] }
+> ```
 
 详见 [接入文档](docs/OpenClaw接入指南.md)。
 
