@@ -98,7 +98,7 @@ uv run python launch_multi.py 3
 | `craft` | 炼丹/炼器（需材料+灵石+配方） | `{"recipe_name": "回灵丹"}` |
 | `sell` | 向NPC出售背包物品（回收价50%） | `{"item_id": "<UUID>", "quantity": 数量}` |
 | `recall` | 回城术传送到安全区（消耗10灵石+30灵力） | `{}` |
-| `sense_root` | 测灵根（安全区，消耗5灵石） | `{}` |
+| `sense_root` | 测灵根（需有合格长辈NPC在场，消耗5灵石） | `{}` |
 | `learn_technique` | 学习背包中的功法秘籍 | `{"item_id": "<UUID>"}` |
 | `activate_technique` | 切换激活的修炼功法 | `{"technique_id": "<UUID>"}` |
 | `equip` | 装备背包中的法器 | `{"item_id": "<UUID>"}` |

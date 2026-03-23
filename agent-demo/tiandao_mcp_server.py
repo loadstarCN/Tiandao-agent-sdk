@@ -168,7 +168,7 @@ async def list_tools() -> list[types.Tool]:
                 "- submit_quest: 提交完成的任务，参数 {\"quest_id\": \"<UUID>\"}\n"
                 "- recall: 回城术传送到安全区（消耗灵石+灵力）\n"
                 "- sell: 向NPC出售物品，参数 {\"item_id\": \"<UUID>\", \"quantity\": 数量}\n"
-                "- sense_root: 测灵根（安全区，消耗灵石）\n"
+                "- sense_root: 测灵根（需有合格长辈NPC在场，消耗5灵石）\n"
                 "- learn_technique: 学习功法秘籍，参数 {\"item_id\": \"<UUID>\"}\n"
                 "- activate_technique: 切换激活功法，参数 {\"technique_id\": \"<UUID>\"}\n"
                 "- equip: 装备法器，参数 {\"item_id\": \"<UUID>\"}\n"
