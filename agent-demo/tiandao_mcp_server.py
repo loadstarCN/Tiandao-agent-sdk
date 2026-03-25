@@ -281,7 +281,6 @@ async def _handle_perceive(args: dict) -> dict:
     relationships = data.get("关系", [])
     rumors = data.get("传闻", [])
     events = data.get("事件", [])
-    ongoing = data.get("上文", {})
     action_hints = data.get("可行动", [])
 
     # 附近修仙者
@@ -355,7 +354,6 @@ async def _handle_perceive(args: dict) -> dict:
         "传闻": [f"[{r.get('可信度', '?')}] {r.get('内容', '')}" for r in rumors],
         "事件": [e.get("内容", "") for e in events],
         "可行动": [f"{h.get('行动', '?')}：{h.get('描述', '')}" for h in action_hints],
-        "上文": ongoing,
         "关系": [f"{r.get('名称', '?')} — {r.get('描述', '')}" for r in relationships],
         "摘要": (
             f"世界时间 {world_time}，{tod.get('时段', '')}，天象：{cel.get('名称', '晴空')}。"
