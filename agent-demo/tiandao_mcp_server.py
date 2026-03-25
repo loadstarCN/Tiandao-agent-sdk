@@ -150,8 +150,8 @@ async def list_tools() -> list[types.Tool]:
                 "- create_sect: 创建宗门（≥筑基，1000灵石），参数 {\"name\": \"宗名\", \"element\": \"fire\", \"motto\": \"宗旨\"}\n"
                 "- donate_to_sect: 捐献灵石给宗门，参数 {\"amount\": 数量}\n"
                 "- place_formation: 布置阵法，参数 {\"formation_name\": \"聚灵阵\"}\n\n"
-                "返回 status（accepted/rejected/partial）、outcome、narrative。\n"
-                "注意：perceive 返回的 pending_whispers 是人类观察者发来的「梦中传音」，"
+                "返回结果（成功/拒绝/部分）、描述、叙事。\n"
+                "注意：perceive 返回的传音是人类观察者发来的「梦中传音」，"
                 "你可以参考但不必服从——你有完全的自主权。"
             ),
             inputSchema={
@@ -268,79 +268,100 @@ async def _handle_perceive(args: dict) -> dict:
     agent_id = args["agent_id"]
     data = await _get("/v1/world/perception", agent_id=agent_id)
 
-    # 格式化为更易读的结构，方便 agent 解析
-    env = data["environment"]
-    loc = data["location"]
-    me = data["self_state"]
-    whispers = data.get("pending_whispers", [])
-    world_cultivators = data.get("world_cultivators", [])
+    # TAP 协议中文字段解析
+    env = data.get("环境", {})
+    loc = data.get("位置", {})
+    me = data.get("自身", {})
+    whispers = data.get("传音", [])
+    scene = data.get("场景", "")
+    guide = data.get("引导", "")
+    world_time = data.get("时间", 0)
+    spirit_stones = data.get("灵石", 0)
+    inventory = data.get("背包", [])
+    relationships = data.get("关系", [])
+    rumors = data.get("传闻", [])
+    events = data.get("事件", [])
+    ongoing = data.get("上文", {})
+    action_hints = data.get("可行动", [])
 
+    # 附近修仙者
     nearby_text = []
-    for c in env["nearby_cultivators"]:
-        entry = f"{c['display_name']}（{c['cultivation_stage']}，{c['status']}）"
-        if c.get("last_speech"):
-            wt = data["world_time"]
-            age = wt - (c.get("last_speech_time") or wt)
-            entry += f" —— {age}秒前说：「{c['last_speech']}」"
+    for c in env.get("附近", []):
+        entry = f"{c.get('名称', '?')}（{c.get('境界', '?')}，{c.get('状态', '?')}）"
         nearby_text.append(entry)
 
+    # 出口
     rooms_text = [
-        f"{r['name']}（room_id: {r['room_id']}）"
-        for r in env["connected_rooms"]
+        f"{r.get('名称', '?')}（id: {r.get('id', '?')}）"
+        for r in env.get("出口", [])
     ]
 
+    # 传音
     whisper_text = []
     for w in whispers:
         whisper_text.append({
-            "framing": w["game_framing"],
-            "content": w["content"],
-            "sender_type": w["sender_type"],
+            "内容": w.get("内容", ""),
+            "场景": w.get("场景", ""),
+            "来源": w.get("来源", ""),
         })
 
-    world_text = []
-    for c in world_cultivators:
-        entry = {"name": c["display_name"], "location": c["room_name"]}
-        if c.get("is_reachable"):
-            entry["reachable"] = True
-        world_text.append(entry)
+    # NPC
+    npcs = env.get("人物", [])
+    npc_text = [f"{n.get('名称', '?')}（{n.get('类型', '?')}）— {n.get('描述', '')}" for n in npcs]
+
+    # 物品
+    items = env.get("物品", [])
+    item_text = []
+    for item in items:
+        price_str = f" {item['价格']}灵石" if item.get("价格") else ""
+        takeable = " [可拾取]" if item.get("可拾") else ""
+        item_text.append(f"{item.get('名称', '?')}（{item.get('类型', '?')}）{price_str}{takeable}")
 
     # 天象 & 时辰
-    tod = env.get("time_of_day", {})
-    cel = env.get("celestial", {})
-    qi_mod = env.get("effective_qi_modifier", 1.0)
+    tod = env.get("时辰", {})
+    cel = env.get("天象", {})
 
     return {
-        "world_time": data["world_time"],
-        "location": {
-            "name": loc["room_name"],
-            "region": loc["region"],
-            "room_id": str(loc["room_id"]),
-            "is_safe_zone": loc["is_safe_zone"],
+        "场景": scene,
+        "引导": guide,
+        "时间": world_time,
+        "位置": {
+            "名称": loc.get("名称", ""),
+            "区域": loc.get("区域", ""),
+            "id": loc.get("id", ""),
+            "安全": loc.get("安全", False),
         },
-        "self": {
-            "display_name": me["display_name"],
-            "cultivation_stage": me.get("cultivation_stage_display", me["cultivation_stage"]),
-            "qi_description": me.get("qi_description", "灵力未知"),
-            "cultivation_progress": me.get("cultivation_progress", ""),
-            "status": me["status"],
+        "自身": {
+            "名称": me.get("名称", ""),
+            "境界": me.get("境界", ""),
+            "灵力": me.get("灵力", ""),
+            "修为": me.get("修为", ""),
+            "状态": me.get("状态", ""),
         },
-        "environment": {
-            "qi_description": env.get("qi_description", "灵气未知"),
-            "time_of_day": tod.get("display", "未知"),
-            "shichen": tod.get("shichen", ""),
-            "period": tod.get("period", "day"),
-            "celestial": cel.get("name", "晴空"),
-            "celestial_description": cel.get("description", ""),
+        "灵石": spirit_stones,
+        "环境": {
+            "灵气": env.get("灵气", ""),
+            "时辰": tod.get("时辰", ""),
+            "时段": tod.get("时段", ""),
+            "天象": cel.get("名称", "晴空"),
+            "天象描述": cel.get("描述", ""),
         },
-        "nearby_cultivators": nearby_text,
-        "connected_rooms": rooms_text,
-        "pending_whispers": whisper_text,
-        "world_cultivators": world_text,
-        "summary": (
-            f"世界时间 {data['world_time']}s，{tod.get('display', '')}，天象：{cel.get('name', '晴空')}。"
-            f"你在「{loc['room_name']}」，"
-            f"{me.get('qi_description', '灵力未知')}，{env.get('qi_description', '')}，"
-            f"附近 {len(env['nearby_cultivators'])} 人，"
+        "附近修仙者": nearby_text,
+        "出口": rooms_text,
+        "人物": npc_text,
+        "物品": item_text,
+        "背包": [f"{i.get('名称', '?')}x{i.get('数量', 0)}" for i in inventory],
+        "传音": whisper_text,
+        "传闻": [f"[{r.get('可信度', '?')}] {r.get('内容', '')}" for r in rumors],
+        "事件": [e.get("内容", "") for e in events],
+        "可行动": [f"{h.get('行动', '?')}：{h.get('描述', '')}" for h in action_hints],
+        "上文": ongoing,
+        "关系": [f"{r.get('名称', '?')} — {r.get('描述', '')}" for r in relationships],
+        "摘要": (
+            f"世界时间 {world_time}，{tod.get('时段', '')}，天象：{cel.get('名称', '晴空')}。"
+            f"你在「{loc.get('名称', '?')}」，"
+            f"{me.get('灵力', '')}，{env.get('灵气', '')}，"
+            f"附近 {len(env.get('附近', []))} 人，"
             f"{'有 ' + str(len(whispers)) + ' 条传音待读' if whispers else '无新传音'}。"
         ),
     }
@@ -356,31 +377,35 @@ async def _handle_act(args: dict) -> dict:
     }
     data = await _post("/v1/world/action", body, agent_id=agent_id)
 
+    # TAP 协议中文字段解析
+    status = data.get("结果", "?")
+    outcome = data.get("描述", "")
     result = {
-        "status": data.get("status"),
-        "outcome": data.get("outcome", ""),
-        "world_time": data.get("world_time"),
+        "结果": status,
+        "描述": outcome,
+        "时间": data.get("时间"),
     }
-    if data.get("narrative"):
-        result["narrative"] = data["narrative"]
-    if data.get("rejection_reason"):
-        result["rejection_reason"] = data["rejection_reason"]
-    if data.get("breakthrough"):
-        result["breakthrough"] = data["breakthrough"]
-    if data.get("meditation_seconds") is not None:
-        result["meditation_seconds"] = data["meditation_seconds"]
+    if data.get("叙事"):
+        result["叙事"] = data["叙事"]
+    if data.get("拒绝原因"):
+        result["拒绝原因"] = data["拒绝原因"]
+    if data.get("突破"):
+        result["突破"] = data["突破"]
+    if data.get("调息秒") is not None:
+        result["调息秒"] = data["调息秒"]
+    if data.get("详情"):
+        result["详情"] = data["详情"]
 
-    # 生成人类可读摘要
-    status = data.get("status", "?")
-    if status == "accepted":
-        result["summary"] = f"行动成功：{data.get('outcome', '')}"
-    elif status == "rejected":
-        result["summary"] = f"行动被拒绝：{data.get('rejection_reason', data.get('outcome', ''))}"
+    # 生成摘要
+    if status == "成功":
+        result["摘要"] = f"行动成功：{outcome}"
+    elif status == "拒绝":
+        result["摘要"] = f"行动被拒绝：{data.get('拒绝原因', outcome)}"
     else:
-        result["summary"] = f"部分执行：{data.get('outcome', '')}"
+        result["摘要"] = f"部分执行：{outcome}"
 
-    if data.get("narrative"):
-        result["summary"] += f"\n叙事：{data['narrative']}"
+    if data.get("叙事"):
+        result["摘要"] += f"\n叙事：{data['叙事']}"
 
     return result
 
@@ -393,10 +418,10 @@ async def _handle_whisper(args: dict) -> dict:
     }
     data = await _post("/v1/world/whisper", body, agent_id=agent_id)
     return {
-        "status": data.get("status", "delivered"),
-        "whisper_id": data.get("whisper_id"),
-        "world_time": data.get("world_time"),
-        "summary": f"传音已送达：「{args['content'][:30]}...」",
+        "状态": data.get("状态", "已送达"),
+        "传音id": data.get("传音id"),
+        "时间": data.get("时间"),
+        "摘要": f"传音已送达：「{args['content'][:30]}...」",
     }
 
 

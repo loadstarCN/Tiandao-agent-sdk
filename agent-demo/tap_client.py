@@ -96,8 +96,8 @@ class TapClient:
         )
         resp.raise_for_status()
         data = resp.json()
-        # 检查系统公告
-        notice = data.get("system_notice")
+        # 检查系统公告（中文协议字段）
+        notice = data.get("公告") or data.get("system_notice")
         if notice:
             log.info("【系统公告】%s", notice)
         return data
