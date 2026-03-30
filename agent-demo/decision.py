@@ -461,7 +461,7 @@ def _format_perception(p: dict) -> str:
     if med_remaining and med_remaining > 0:
         meditation_line = f"【调息中】{med_desc or '调息片刻'}，约 {med_remaining} 秒后可行动"
 
-    spirit_stones = p.get("spirit_stones", 0)
+    spirit_stones = p.get("currency", p.get("spirit_stones", 0))
     sect_terr = loc.get("sect_territory")
     qi_elem = env.get("qi_element_name")
     lines = [
