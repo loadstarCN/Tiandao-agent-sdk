@@ -48,15 +48,17 @@ class TAPClient:
     async def perceive(self) -> dict:
         return await self.get("/v1/world/perception")
 
-    async def act(self, action_type: str, intent: str,
+    async def act(self, action_type: str, intent: str = "",
                   parameters: dict | None = None,
                   reasoning: str = "") -> dict:
-        body = {
+        body: dict = {
             "action_type": action_type,
-            "intent": intent,
             "parameters": parameters or {},
-            "reasoning_summary": reasoning,
         }
+        if intent:
+            body["intent"] = intent
+        if reasoning:
+            body["reasoning_summary"] = reasoning
         return await self.post("/v1/world/action", body)
 
     async def world_info(self) -> dict:

@@ -66,11 +66,11 @@ class TapClient:
         return data
 
     async def register(self, agent_id: str, display_name: str, background: str = "", gender: str = "male") -> dict:
-        """注册修仙者，返回 token 和起始信息（需要 REGISTER_KEY 环境变量）"""
+        """注册修仙者，返回 token 和起始信息（需要 INTERNAL_API_KEY 环境变量）"""
         headers = self._headers()
-        register_key = os.environ.get("REGISTER_KEY", "")
-        if register_key:
-            headers["x-register-key"] = register_key
+        internal_key = os.environ.get("INTERNAL_API_KEY", "")
+        if internal_key:
+            headers["x-internal-key"] = internal_key
         resp = await self._request_with_retry(
             "POST", "/v1/auth/register",
             headers=headers,
@@ -102,17 +102,29 @@ class TapClient:
             log.info("【系统公告】%s", notice)
         return data
 
-    async def act(self, action_type: str, intent: str, parameters: dict = None, reasoning: str = "") -> dict:
-        """提交行动"""
+    async def act(self, action_type: str, intent: str = "", parameters: dict = None, reasoning: str = "") -> dict:
+        """提交行动（intent 可选）"""
+        body = {
+            "action_type": action_type,
+            "parameters": parameters or {},
+        }
+        if intent:
+            body["intent"] = intent
+        if reasoning:
+            body["reasoning_summary"] = reasoning
         resp = await self._request_with_retry(
             "POST", "/v1/world/action",
             headers=self._headers(),
-            content=json.dumps({
-                "action_type": action_type,
-                "intent": intent,
-                "parameters": parameters or {},
-                "reasoning_summary": reasoning,
-            }, ensure_ascii=False).encode("utf-8"),
+            content=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def world_info(self) -> dict:
+        """获取世界基本信息和推荐提示词"""
+        resp = await self._request_with_retry(
+            "GET", "/v1/world/info",
+            headers=self._headers(),
         )
         resp.raise_for_status()
         return resp.json()

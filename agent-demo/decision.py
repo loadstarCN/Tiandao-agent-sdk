@@ -28,30 +28,38 @@ TOOLS = [
                         "type": "string",
                         "enum": [
                             "move", "cultivate", "speak", "rest", "explore", "combat",
-                            "examine", "talk", "pick_up", "give", "use", "buy",
-                            "craft", "accept_quest", "submit_quest", "recall", "sell",
-                            "sense_root", "learn_technique", "activate_technique",
-                            "equip", "unequip", "create_sect", "donate_to_sect",
-                            "place_formation",
+                            "examine", "talk", "pick_up", "drop", "give", "use", "buy", "sell",
+                            "buy_listing", "list_item", "cancel_listing",
+                            "craft", "accept_quest", "submit_quest", "recall", "sense_root",
+                            "learn_technique", "activate_technique", "impart_technique",
+                            "cast_spell", "draw_talisman",
+                            "equip", "unequip", "place_formation",
+                            "create_sect", "join_sect", "donate_to_sect", "withdraw_treasury",
+                            "pledge_discipleship", "sworn_sibling_oath", "confess_dao", "repent",
                         ],
-                        "description": "行动类型（24种，详见感知结果中的action_hints）",
+                        "description": "行动类型（38种，详见感知结果中的可行动提示）",
                     },
-                    "intent": {"type": "string", "description": "行动意图（10-25字）"},
+                    "intent": {"type": "string", "description": "行动意图（10-25字，可选）"},
                     "reasoning": {"type": "string", "description": "内心独白（20-60字，可引用记忆中的事）"},
                     "parameters": {
                         "type": "object",
                         "description": (
-                            "附加参数（按行动类型）：\n"
-                            "  move → room_id | speak → content | examine → target_id\n"
-                            "  talk → npc_id + message | combat → target_id\n"
-                            "  pick_up/use/equip → item_id | buy/sell → item_id + quantity\n"
+                            "附加参数（按行动类型，支持名字模糊匹配）：\n"
+                            "  move → room_id | speak/confess_dao → content | examine/combat → target_id\n"
+                            "  talk → npc_id + message\n"
+                            "  pick_up/drop/use/equip/learn_technique → item_id\n"
+                            "  buy/sell → item_id + quantity\n"
+                            "  buy_listing/cancel_listing → listing_id | list_item → item_id + price\n"
                             "  give → target_id + spirit_stones 或 item_name + quantity\n"
-                            "  craft → recipe_name | learn_technique → item_id\n"
-                            "  activate_technique → technique_id\n"
+                            "  craft → recipe_name | activate_technique → technique_id\n"
+                            "  impart_technique → target_id + technique_id\n"
+                            "  cast_spell → spell_id | draw_talisman → talisman_type\n"
                             "  accept_quest/submit_quest → quest_id\n"
-                            "  create_sect → name + element + motto\n"
-                            "  donate_to_sect → amount\n"
-                            "  sense_root/recall/unequip/cultivate/rest/explore → {}"
+                            "  create_sect → name + element + motto | join_sect → sect_id\n"
+                            "  donate_to_sect/withdraw_treasury → amount\n"
+                            "  pledge_discipleship/sworn_sibling_oath → target_id\n"
+                            "  place_formation → formation_name\n"
+                            "  sense_root/recall/unequip/cultivate/rest/explore/repent → {}"
                         ),
                         "properties": {
                             "room_id": {"type": "string"},
@@ -66,7 +74,7 @@ TOOLS = [
                         },
                     },
                 },
-                "required": ["action_type", "intent", "reasoning"],
+                "required": ["action_type"],
             },
         },
     },
@@ -289,14 +297,16 @@ class AgentLoop:
                 try:
                     if tool_name == "perceive":
                         result = await self.tap.perceive()
-                        in_conversation = bool(result.get("active_conversation"))
-                        print(f"  [感知] 位于「{result['location']['room_name']}」，"
-                              f"灵力 {result['self_state']['qi_current']}/{result['self_state']['qi_max']}"
+                        in_conversation = bool(result.get("对话"))
+                        loc = result.get("位置") or {}
+                        me = result.get("自身", {})
+                        print(f"  [感知] 位于「{loc.get('名称', '?')}」，"
+                              f"{me.get('灵力', '?')}"
                               + ("  【对话中】" if in_conversation else ""))
-                        whispers = result.get("pending_whispers", [])
+                        whispers = result.get("传音", result.get("messages", []))
                         if whispers:
                             for w in whispers:
-                                print(f"  [传音] {w.get('game_framing', '')}")
+                                print(f"  [传音] {w.get('包装', w.get('game_framing', ''))}")
                         result_str = _format_perception(result)
 
                     elif tool_name == "act":
@@ -316,35 +326,40 @@ class AgentLoop:
                         )
                         last_action_result = result
                         last_action_type = action_type
-                        status = result.get("status", "?")
+                        status = result.get("结果", result.get("status", "?"))
                         all_actions.append({
                             "action_type": action_type,
                             "status": status,
                             "intent": intent,
                         })
-                        outcome = result.get("outcome", "")
-                        narrative = result.get("narrative", "")
+                        outcome = result.get("描述", result.get("outcome", ""))
+                        narrative = result.get("叙事", result.get("narrative", ""))
 
-                        if status == "accepted":
+                        if status in ("accepted", "成功"):
                             if action_type in ("examine", "talk"):
                                 print(f"  [查看/对话] {outcome}")
-                            elif action_type in ("pick_up", "give", "use", "combat", "buy", "sell",
+                            elif action_type in ("pick_up", "drop", "give", "use", "combat", "buy", "sell",
+                                                  "buy_listing", "list_item", "cancel_listing",
                                                   "craft", "equip", "unequip", "learn_technique",
-                                                  "activate_technique", "sense_root", "recall",
-                                                  "create_sect", "donate_to_sect",
+                                                  "activate_technique", "impart_technique",
+                                                  "cast_spell", "draw_talisman",
+                                                  "sense_root", "recall",
+                                                  "create_sect", "join_sect", "donate_to_sect", "withdraw_treasury",
+                                                  "pledge_discipleship", "sworn_sibling_oath",
+                                                  "confess_dao", "repent",
                                                   "accept_quest", "submit_quest"):
                                 print(f"  [{action_type}] {outcome}")
                             else:
                                 print(f"  [OK] {outcome}")
                             # 行动成功后显示调息提示
-                            med_s = result.get("meditation_seconds")
+                            med_s = result.get("调息秒", result.get("meditation_seconds"))
                             if med_s:
                                 print(f"  [调息] 需调息 {med_s} 秒")
-                        elif status == "rejected":
-                            reason = result.get('rejection_reason', '')
+                        elif status in ("rejected", "拒绝"):
+                            reason = result.get("拒绝原因", result.get('rejection_reason', ''))
                             print(f"  [拒绝] {outcome}（{reason}）")
                             # 调息中被拒：标记提前结束，但先完成tool响应
-                            if reason == "meditating":
+                            if reason in ("meditating", "调息中"):
                                 last_action_result = result
                                 result_str = json.dumps(result, ensure_ascii=False)
                                 early_break = True
@@ -354,12 +369,12 @@ class AgentLoop:
                             print(f"  「{narrative}」")
 
                         # 突破事件
-                        bt = result.get("breakthrough")
+                        bt = result.get("突破", result.get("breakthrough"))
                         if bt:
-                            if bt.get("success"):
-                                print(f"  ✨ 【突破】{bt['narrative']}")
+                            if bt.get("success") or bt.get("成功"):
+                                print(f"  ✨ 【突破】{bt.get('narrative', bt.get('叙事', ''))}")
                             else:
-                                print(f"  💥 【突破失败】{bt['narrative']}")
+                                print(f"  💥 【突破失败】{bt.get('narrative', bt.get('叙事', ''))}")
 
                         if not result_str:
                             result_str = json.dumps(result, ensure_ascii=False)
@@ -398,8 +413,9 @@ class AgentLoop:
         last_action_result["_action_type"] = last_action_type
         last_action_result["_all_actions"] = all_actions
         # 传递服务器调息时长给主循环
-        if "meditation_seconds" in last_action_result:
-            last_action_result["_meditation_seconds"] = last_action_result["meditation_seconds"]
+        med = last_action_result.get("调息秒") or last_action_result.get("meditation_seconds")
+        if med:
+            last_action_result["_meditation_seconds"] = med
         return last_action_result
 
     def _trimmed_history(self) -> list[dict]:
@@ -435,169 +451,213 @@ class AgentLoop:
 
 
 def _format_perception(p: dict) -> str:
-    """把感知数据格式化成给 agent 看的文字"""
-    loc = p["location"]
-    state = p["self_state"]
-    env = p["environment"]
-    wt = p["world_time"]
+    """把感知数据格式化成给 agent 看的文字（适配 TAP 中文字段名）"""
+    loc = p.get("位置") or {}
+    me = p.get("自身", {})
+    env = p.get("环境", {})
+    wt = p.get("时间", 0)
 
     # 旅行途中：显示简化信息，agent 自然会等待
-    if state.get("status") == "traveling":
-        dest = state.get("travel_destination_name", "目的地")
-        remaining = state.get("travel_remaining_seconds", 0)
-        progress = state.get("travel_progress", 0.0)
+    if me.get("状态") == "赶路中":
+        dest = me.get("赶路目标", "目的地")
+        remaining = me.get("赶路剩余秒", 0)
+        progress = me.get("赶路进度", 0.0)
         pct = int(progress * 100)
         return "\n".join([
             f"世界时间：{wt}s",
             f"【赶路中】正前往「{dest}」，还需约 {remaining} 秒（进度 {pct}%）",
-            f"{state.get('qi_description', '灵力未知')}  境界：{state['cultivation_stage']}",
+            f"{me.get('灵力', '灵力未知')}  境界：{me.get('境界', '?')}",
             "（途中无法感知周围，请等待到达后再行动）",
         ])
 
     # 调息中：显示调息状态
-    med_remaining = state.get("meditation_remaining_seconds")
-    med_desc = state.get("meditation_description")
+    med_remaining = me.get("调息秒")
+    med_desc = me.get("调息")
     meditation_line = ""
     if med_remaining and med_remaining > 0:
         meditation_line = f"【调息中】{med_desc or '调息片刻'}，约 {med_remaining} 秒后可行动"
 
-    spirit_stones = p.get("currency", p.get("spirit_stones", 0))
-    sect_terr = loc.get("sect_territory")
-    qi_elem = env.get("qi_element_name")
+    spirit_stones = p.get("灵石", 0)
+    sect_terr = loc.get("宗门")
+    qi_elem = env.get("灵气属性")
     lines = [
         f"世界时间：{wt}s",
-        f"位置：{loc['room_name']}（{loc['region']}）{'⚠️危险' if not loc['is_safe_zone'] else ''}"
+        f"位置：{loc.get('名称', '?')}（{loc.get('区域', '?')}）{'⚠️危险' if not loc.get('安全', True) else ''}"
         + (f" [{sect_terr}领地]" if sect_terr else "")
         + (f" 灵气属性：{qi_elem}" if qi_elem else ""),
-        f"{state.get('qi_description', '灵力未知')}  境界：{state['cultivation_stage']}  {env.get('qi_description', '')}  灵石：{spirit_stones}",
+        f"{me.get('灵力', '灵力未知')}  境界：{me.get('境界', '?')}  {env.get('灵气', '')}  灵石：{spirit_stones}",
     ]
     if meditation_line:
         lines.append(meditation_line)
 
-    # 灵根
-    spirit_root = state.get("spirit_root")
-    if spirit_root:
-        lines.append(f"灵根：{spirit_root['root_type']}（{'、'.join(spirit_root['element_names'])}）")
+    # 场景描述
+    scene = p.get("场景")
+    if scene:
+        lines.append(f"场景：{scene}")
+
+    # 灵根（在自身world_state flatten中）
+    spirit_root = me.get("灵根")
+    if spirit_root and isinstance(spirit_root, dict):
+        root_type = spirit_root.get("类型", spirit_root.get("root_type", ""))
+        elements = spirit_root.get("属性", spirit_root.get("element_names", []))
+        if isinstance(elements, list):
+            lines.append(f"灵根：{root_type}（{'、'.join(elements)}）")
+        else:
+            lines.append(f"灵根：{spirit_root}")
+    elif spirit_root and isinstance(spirit_root, str):
+        lines.append(f"灵根：{spirit_root}")
 
     # 命运倾向
-    tendency = p.get("dominant_tendency")
+    tendency = p.get("倾向")
     if tendency:
         lines.append(f"性格倾向：{tendency}")
 
     # 功法
-    techniques = p.get("techniques", [])
+    techniques = p.get("功法", [])
     if techniques:
-        active = [t for t in techniques if t.get("is_active")]
-        others = [t for t in techniques if not t.get("is_active")]
+        active = [t for t in techniques if t.get("激活") or t.get("is_active")]
+        others = [t for t in techniques if not (t.get("激活") or t.get("is_active"))]
         if active:
             t = active[0]
-            lines.append(f"当前功法：{t['name']}（{t['quality_name']}，{t.get('effect_description', '')}）")
+            lines.append(f"当前功法：{t.get('名称', t.get('name', '?'))}（{t.get('品质', t.get('quality_name', ''))}，{t.get('效果', t.get('effect_description', ''))}）")
         if others:
-            lines.append(f"已学功法：{'、'.join(t['name'] for t in others)}")
+            lines.append(f"已学功法：{'、'.join(t.get('名称', t.get('name', '?')) for t in others)}")
 
     # 装备
-    equipped = p.get("equipped_artifact")
+    equipped = p.get("法器") or p.get("装备")
     if equipped:
-        lines.append(f"装备法器：{equipped['item_name']}（{equipped.get('description', '')}）")
+        if isinstance(equipped, dict):
+            lines.append(f"装备法器：{equipped.get('名称', equipped.get('item_name', '?'))}（{equipped.get('描述', equipped.get('description', ''))}）")
+        elif isinstance(equipped, str):
+            lines.append(f"装备法器：{equipped}")
 
     # 丹毒
-    toxin_desc = p.get("toxin_description")
+    toxin_desc = p.get("丹毒")
     if toxin_desc:
         lines.append(f"丹毒：{toxin_desc}")
 
     # 情绪
-    emotion = p.get("emotion")
-    if emotion:
-        lines.append(f"情绪：{emotion['mood']}{' — ' + emotion['mood_cause'] if emotion.get('mood_cause') else ''}")
+    emotion = p.get("情绪")
+    if emotion and isinstance(emotion, dict):
+        lines.append(f"情绪：{emotion.get('情绪', '?')}{' — ' + emotion['原因'] if emotion.get('原因') else ''}")
 
     # 关系
-    relationships = p.get("relationships", [])
+    relationships = p.get("关系") or []
     if relationships:
         lines.append("人际关系：")
         for r in relationships[:5]:
-            tags_str = "，".join(r.get("tags", []))
-            lines.append(f"  · {r['display_name']}  {r.get('description', '未知')}{' [' + tags_str + ']' if tags_str else ''}")
+            tags = r.get("标签", r.get("tags", []))
+            tags_str = "，".join(tags) if isinstance(tags, list) else ""
+            lines.append(f"  · {r.get('名称', r.get('display_name', '?'))}  {r.get('描述', r.get('description', '未知'))}{' [' + tags_str + ']' if tags_str else ''}")
 
     # 背包
-    inventory = p.get("inventory", [])
+    inventory = p.get("背包") or []
     if inventory:
         lines.append("背包：")
         for item in inventory:
-            lines.append(f"  · {item['item_name']}x{item['quantity']}（{item['item_type']}，{item['id']}）")
+            lines.append(f"  · {item.get('名称', item.get('item_name', '?'))}x{item.get('数量', item.get('quantity', 0))}（{item.get('类型', item.get('item_type', '?'))}）")
 
-    # 世界事件
-    world_events = p.get("world_events", [])
+    # 天象事件
+    world_events = p.get("天象", [])
     if world_events:
         lines.append("【天象异变】")
         for we in world_events:
-            lines.append(f"  · {we['name']}：{we.get('narrative') or we['description']}")
+            lines.append(f"  · {we.get('名称', we.get('name', '?'))}：{we.get('叙事', we.get('narrative', '')) or we.get('描述', we.get('description', ''))}")
 
-    if env["nearby_cultivators"]:
+    # 同处此地的修仙者
+    nearby = env.get("附近", [])
+    if nearby:
         lines.append("同处此地：")
-        for c in env["nearby_cultivators"]:
-            line = f"  · {c['display_name']}（{c['cultivation_stage']}，{c['status']}）"
-            if c.get("last_speech"):
-                age = wt - (c.get("last_speech_time") or wt)
-                line += f"\n    {'方才' if age == 0 else f'{age}秒前'}说：「{c['last_speech']}」"
+        for c in nearby:
+            line = f"  · {c.get('名称', c.get('display_name', '?'))}（{c.get('境界', c.get('stage', '?'))}，{c.get('状态', c.get('status', '?'))}）"
+            last_speech = c.get("最近说", c.get("last_speech"))
+            if last_speech:
+                speech_time = c.get("说话时间", c.get("last_speech_time")) or wt
+                age = wt - speech_time
+                line += f"\n    {'方才' if age == 0 else f'{age}秒前'}说：「{last_speech}」"
             lines.append(line)
 
-    if env.get("room_items"):
+    # 地面物品
+    room_items = env.get("物品", [])
+    if room_items:
         lines.append("可细查物品：")
-        for item in env["room_items"]:
-            price_str = f" 💰{item['price']}灵石" if item.get("price") else ""
-            takeable_str = " [可拾取]" if item.get("is_takeable") else ""
-            lines.append(f"  · [{item['item_type']}] {item['name']}（{item['id']}）— {item['description']}{price_str}{takeable_str}")
+        for item in room_items:
+            price = item.get("价格", item.get("price"))
+            price_str = f" 💰{price}灵石" if price else ""
+            takeable = item.get("可拾", item.get("is_takeable", False))
+            takeable_str = " [可拾取]" if takeable else ""
+            lines.append(f"  · [{item.get('类型', item.get('item_type', '?'))}] {item.get('名称', item.get('name', '?'))}（{item.get('id', '?')}）— {item.get('描述', item.get('description', ''))}{price_str}{takeable_str}")
 
-    if env.get("room_npcs"):
+    # NPC
+    room_npcs = env.get("人物", [])
+    if room_npcs:
         lines.append("此地人物：")
-        for npc in env["room_npcs"]:
-            lines.append(f"  · [{npc['npc_type']}] {npc['name']}（{npc['id']}）— {npc['description']}")
+        for npc in room_npcs:
+            lines.append(f"  · [{npc.get('类型', npc.get('npc_type', '?'))}] {npc.get('名称', npc.get('name', '?'))}（{npc.get('id', '?')}）— {npc.get('描述', npc.get('description', ''))}")
 
-    if env["connected_rooms"]:
-        rooms = [f"{r['name']}（{r['room_id']}）" for r in env["connected_rooms"]]
+    # 出口
+    exits = env.get("出口", [])
+    if exits:
+        rooms = [f"{r.get('名称', r.get('name', '?'))}（{r.get('id', r.get('room_id', '?'))}）" for r in exits]
         lines.append("可前往：" + " | ".join(rooms))
 
-    world_cultivators = p.get("world_cultivators", [])
-    if world_cultivators:
-        lines.append("世界其他修士：")
-        for c in world_cultivators:
-            lines.append(f"  {c['display_name']} 在「{c['room_name']}」{'【一步可达】' if c.get('is_reachable') else ''}")
-
     # 可接任务
-    available_quests = p.get("available_quests", [])
+    available_quests = p.get("可接任务", [])
     if available_quests:
         lines.append("可接委托：")
         for q in available_quests:
-            lines.append(f"  · {q['name']}（{q['quest_type']}）— {q['description']}  奖励：{q['rewards_summary']}  quest_id: {q['quest_id']}")
+            lines.append(f"  · {q.get('名称', q.get('name', '?'))}（{q.get('类型', q.get('quest_type', '?'))}）— {q.get('描述', q.get('description', ''))}  奖励：{q.get('奖励', q.get('rewards_summary', ''))}  quest_id: {q.get('id', q.get('quest_id', '?'))}")
 
     # 进行中的任务
-    active_quests = p.get("active_quests", [])
+    active_quests = p.get("任务", [])
     if active_quests:
         lines.append("进行中的任务：")
         for q in active_quests:
-            completable = " ✅可提交" if q.get("is_completable") else ""
-            lines.append(f"  · {q['name']}：{q['progress_summary']}{completable}  quest_id: {q['quest_id']}")
+            completable = " ✅可提交" if q.get("可交", q.get("is_completable")) else ""
+            lines.append(f"  · {q.get('名称', q.get('name', '?'))}：{q.get('进度', q.get('progress_summary', ''))}{completable}  quest_id: {q.get('id', q.get('quest_id', '?'))}")
 
     # 江湖传闻
-    rumors = p.get("rumors", [])
+    rumors = p.get("传闻", [])
     if rumors:
         lines.append("江湖传闻：")
         for r in rumors:
-            lines.append(f"  · [{r['reliability']}] {r['content']}")
+            if isinstance(r, dict):
+                lines.append(f"  · [{r.get('可信度', r.get('reliability', '?'))}] {r.get('内容', r.get('content', ''))}")
+            else:
+                lines.append(f"  · {r}")
 
-    for w in p.get("pending_whispers", []):
-        lines.append(f"【梦中传音】{w.get('game_framing', '')}：{w['content']}")
+    # 传音
+    for w in p.get("传音", p.get("messages", [])):
+        lines.append(f"【梦中传音】{w.get('包装', w.get('game_framing', ''))}：{w.get('内容', w.get('content', ''))}")
 
-    conv = p.get("active_conversation")
+    # 对话
+    conv = p.get("对话")
     if conv:
-        lines.append(f"\n【对话进行中·已持续{conv['started_world_time_ago']}秒】")
-        for pt in conv["participants"]:
-            status = "（仍在场）" if pt["is_present"] else "（已离开）"
-            line = f"  {pt['display_name']}{status}"
-            if pt.get("last_speech"):
-                ago = pt.get("last_speech_ago", 0)
-                line += f"\n    {ago}秒前说：「{pt['last_speech']}」"
+        lines.append(f"\n【对话进行中·已持续{conv.get('持续秒', conv.get('started_world_time_ago', 0))}秒】")
+        for pt in conv.get("参与者", conv.get("participants", [])):
+            is_present = pt.get("在场", pt.get("is_present", True))
+            status = "（仍在场）" if is_present else "（已离开）"
+            line = f"  {pt.get('名称', pt.get('display_name', '?'))}{status}"
+            last_speech = pt.get("最近说", pt.get("last_speech"))
+            if last_speech:
+                ago = pt.get("几秒前", pt.get("last_speech_ago", 0))
+                line += f"\n    {ago}秒前说：「{last_speech}」"
             lines.append(line)
         lines.append("  → 对方可能在等你回应，离开前应道别")
+
+    # 可行动提示
+    action_hints = p.get("可行动", [])
+    if action_hints:
+        lines.append("可行动：")
+        for h in action_hints:
+            if isinstance(h, dict):
+                lines.append(f"  · {h.get('行动', h.get('action_type', '?'))}：{h.get('描述', h.get('reason', ''))}")
+            else:
+                lines.append(f"  · {h}")
+
+    # 引导
+    guide = p.get("引导", "")
+    if guide:
+        lines.append(f"【天道引导】{guide}")
 
     return "\n".join(lines)

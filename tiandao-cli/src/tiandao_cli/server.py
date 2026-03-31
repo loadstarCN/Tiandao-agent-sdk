@@ -70,24 +70,34 @@ async def tiandao_act(
 ) -> str:
     """在天道世界执行一个行动。
 
-    支持的 action_type：
+    支持的 action_type（38种）：
       基础: move, cultivate, speak, rest, explore, examine, talk, combat
-      物品: pick_up, give, use, buy, sell, craft
-      功法: learn_technique, activate_technique, equip, unequip
-      灵根: sense_root, recall
-      宗门: create_sect, donate_to_sect
+      物品: pick_up, drop, give, use, buy, sell, buy_listing, list_item, cancel_listing, craft
+      功法: learn_technique, activate_technique, impart_technique, cast_spell, draw_talisman, equip, unequip
+      灵根: sense_root, recall, place_formation
+      宗门: create_sect, join_sect, donate_to_sect, withdraw_treasury
+      关系: pledge_discipleship, sworn_sibling_oath, confess_dao, repent
       任务: accept_quest, submit_quest
 
-    parameters 为 JSON 字符串，按行动类型填写：
-      move: {"room_id": "UUID"}
-      speak: {"content": "说的话"}
-      examine/combat: {"target_id": "UUID"}
-      talk: {"npc_id": "UUID", "message": "话"}
-      pick_up/use/equip/learn_technique: {"item_id": "UUID"}
-      buy/sell: {"item_id": "UUID", "quantity": N}
+    parameters 为 JSON 字符串，按行动类型填写（支持名字模糊匹配）：
+      move: {"room_id": "UUID或名字"}
+      speak/confess_dao: {"content": "说的话"}
+      examine/combat: {"target_id": "UUID或名字"}
+      talk: {"npc_id": "UUID或名字", "message": "话"}
+      pick_up/drop/use/equip/learn_technique: {"item_id": "UUID或名字"}
+      buy/sell: {"item_id": "UUID或名字", "quantity": N}
+      buy_listing/cancel_listing: {"listing_id": "UUID"}
+      list_item: {"item_id": "UUID", "price": N}
       give: {"target_id": "UUID", "spirit_stones": N}
+      craft: {"recipe_name": "配方名"}
+      activate_technique: {"technique_id": "UUID或名字"}
+      impart_technique: {"target_id": "UUID", "technique_id": "UUID"}
+      cast_spell: {"spell_id": "UUID"} | draw_talisman: {"talisman_type": "类型"}
       create_sect: {"name": "宗名", "element": "fire", "motto": "宗旨"}
-      donate_to_sect: {"amount": N}
+      join_sect: {"sect_id": "UUID"}
+      donate_to_sect/withdraw_treasury: {"amount": N}
+      pledge_discipleship/sworn_sibling_oath: {"target_id": "UUID"}
+      place_formation: {"formation_name": "聚灵阵"}
       accept_quest/submit_quest: {"quest_id": "UUID"}
       其他: {}
 
@@ -132,98 +142,93 @@ async def tiandao_whisper(content: str) -> str:
 
 
 def _format_perception(data: dict) -> str:  # noqa: C901
-    """将 perception 原始数据格式化为结构化 JSON。"""
+    """将 perception 原始数据格式化为结构化 JSON（适配 TAP 中文字段名）。"""
     from typing import Any
 
-    env: dict[str, Any] = data.get("environment", {})
-    loc: dict[str, Any] = data.get("location", {})
-    me: dict[str, Any] = data.get("self_state", {})
-    whispers: list[dict[str, Any]] = data.get("pending_whispers", [])
-    world_cultivators: list[dict[str, Any]] = data.get("world_cultivators", [])
-    tod: dict[str, Any] = env.get("time_of_day", {})
-    cel: dict[str, Any] = env.get("celestial", {})
+    env: dict[str, Any] = data.get("环境", {})
+    loc: dict[str, Any] = data.get("位置") or {}
+    me: dict[str, Any] = data.get("自身", {})
+    whispers: list[dict[str, Any]] = data.get("传音", data.get("messages", []))
+    tod: dict[str, Any] = env.get("时辰", {})
+    cel: dict[str, Any] = env.get("天象", {})
 
     nearby_text = []
-    for c in env.get("nearby_cultivators", []):
-        entry = f"{c['display_name']}（{c['cultivation_stage']}，{c['status']}）"
-        if c.get("last_speech"):
-            wt = data.get("world_time", 0)
-            age = wt - (c.get("last_speech_time") or wt)
-            entry += f" —— {age}秒前说：「{c['last_speech']}」"
+    for c in env.get("附近", []):
+        entry = f"{c.get('名称', '?')}（{c.get('境界', c.get('stage', '?'))}，{c.get('状态', '?')}）"
+        if c.get("最近说"):
+            wt = data.get("时间", 0)
+            age = wt - (c.get("说话时间") or wt)
+            entry += f" —— {age}秒前说：「{c['最近说']}」"
         nearby_text.append(entry)
 
     rooms_text = [
-        f"{r['name']}（room_id: {r['room_id']}）"
-        for r in env.get("connected_rooms", [])
+        f"{r.get('名称', '?')}（id: {r.get('id', '?')}）"
+        for r in env.get("出口", [])
     ]
 
     whisper_text = [
-        {"framing": w["game_framing"], "content": w["content"], "sender_type": w["sender_type"]}
+        {"framing": w.get("包装", ""), "content": w.get("内容", ""), "sender_type": w.get("来源", "")}
         for w in whispers
     ]
 
-    world_text = []
-    for c in world_cultivators:
-        wc: dict[str, Any] = {"name": c["display_name"], "location": c["room_name"]}
-        if c.get("is_reachable"):
-            wc["reachable"] = True
-        world_text.append(wc)
-
-    spirit_root = me.get("spirit_root")
-    techniques = data.get("techniques", [])
-    equipped = data.get("equipped_artifact")
+    spirit_root = me.get("灵根")
+    techniques = data.get("功法", [])
+    equipped = data.get("法器") or data.get("装备")
 
     result: dict[str, Any] = {
-        "world_time": data.get("world_time"),
-        "location": {
-            "name": loc.get("room_name"),
-            "region": loc.get("region"),
-            "room_id": str(loc.get("room_id", "")),
-            "is_safe_zone": loc.get("is_safe_zone"),
+        "时间": data.get("时间"),
+        "位置": {
+            "名称": loc.get("名称", ""),
+            "区域": loc.get("区域", ""),
+            "id": str(loc.get("id", "")),
+            "安全": loc.get("安全", True),
         },
-        "self": {
-            "display_name": me.get("display_name"),
-            "cultivation_stage": me.get("cultivation_stage_display", me.get("cultivation_stage")),
-            "qi": f"{me.get('qi_current', 0)}/{me.get('qi_max', 0)}",
-            "status": me.get("status"),
-            "cultivate_points": me.get("cultivate_points", 0),
-            "cultivate_points_needed": me.get("cultivate_points_needed", 0),
+        "自身": {
+            "名称": me.get("名称", ""),
+            "境界": me.get("境界", me.get("stage", "")),
+            "灵力": me.get("灵力", me.get("resource", "")),
+            "状态": me.get("状态", ""),
+            "修为": me.get("修为", me.get("growth", "")),
         },
-        "environment": {
-            "ambient_qi": env.get("ambient_qi", 1.0),
-            "effective_qi_modifier": env.get("effective_qi_modifier", 1.0),
-            "time_of_day": tod.get("display", "未知"),
-            "shichen": tod.get("shichen", ""),
-            "period": tod.get("period", "day"),
-            "celestial": cel.get("name", "晴空"),
+        "环境": {
+            "灵气": env.get("灵气", env.get("energy", "")),
+            "时段": tod.get("时段", tod.get("display", "未知")),
+            "时辰": tod.get("时辰", tod.get("shichen", "")),
+            "天象": cel.get("名称", cel.get("name", "晴空")),
         },
-        "nearby_cultivators": nearby_text,
-        "connected_rooms": rooms_text,
-        "pending_whispers": whisper_text,
-        "world_cultivators": world_text,
+        "附近": nearby_text,
+        "出口": rooms_text,
+        "传音": whisper_text,
     }
 
     # 可选字段
     if spirit_root:
-        result["self"]["spirit_root"] = (
-            f"{spirit_root['root_type']}（{'、'.join(spirit_root['element_names'])}）"
-        )
+        if isinstance(spirit_root, dict):
+            result["自身"]["灵根"] = spirit_root
+        else:
+            result["自身"]["灵根"] = str(spirit_root)
     if techniques:
-        result["techniques"] = [
-            {"name": t["name"], "quality": t["quality_name"], "active": t["is_active"]}
+        result["功法"] = [
+            {"名称": t.get("名称", t.get("name", "?")), "品质": t.get("品质", t.get("quality_name", "")), "激活": t.get("激活", t.get("is_active", False))}
             for t in techniques
         ]
     if equipped:
-        result["equipped_artifact"] = equipped["item_name"]
-    if data.get("rumors"):
-        result["rumors"] = [r["content"] for r in data["rumors"]]
+        if isinstance(equipped, dict):
+            result["法器"] = equipped.get("名称", equipped.get("item_name", ""))
+        else:
+            result["法器"] = str(equipped)
+    rumors = data.get("传闻", [])
+    if rumors:
+        result["传闻"] = [r.get("内容", r.get("content", "")) if isinstance(r, dict) else r for r in rumors]
 
-    qi_mod = env.get("effective_qi_modifier", 1.0)
-    result["summary"] = (
-        f"世界时间 {data.get('world_time')}s，{tod.get('display', '')}，天象：{cel.get('name', '晴空')}。"
-        f"你在「{loc.get('room_name')}」，"
-        f"灵力 {me.get('qi_current', 0)}/{me.get('qi_max', 0)}，灵气倍率 {qi_mod:.2f}，"
-        f"附近 {len(env.get('nearby_cultivators', []))} 人，"
+    spirit_stones = data.get("灵石", 0)
+    result["灵石"] = spirit_stones
+
+    result["摘要"] = (
+        f"世界时间 {data.get('时间')}s，{tod.get('时段', '')}，天象：{cel.get('名称', cel.get('name', '晴空'))}。"
+        f"你在「{loc.get('名称', '?')}」，"
+        f"{me.get('灵力', me.get('resource', '?'))}，{env.get('灵气', env.get('energy', ''))}，"
+        f"附近 {len(env.get('附近', []))} 人，"
         f"{'有 ' + str(len(whispers)) + ' 条传音待读' if whispers else '无新传音'}。"
     )
 
@@ -231,28 +236,34 @@ def _format_perception(data: dict) -> str:  # noqa: C901
 
 
 def _format_action(data: dict) -> str:
-    """将 action 响应格式化。"""
+    """将 action 响应格式化（适配 TAP 中文字段名）。"""
     result: dict = {
-        "status": data.get("status"),
-        "outcome": data.get("outcome", ""),
-        "world_time": data.get("world_time"),
+        "结果": data.get("结果", data.get("status", "?")),
+        "描述": data.get("描述", data.get("outcome", "")),
+        "时间": data.get("时间", data.get("world_time")),
     }
-    if data.get("narrative"):
-        result["narrative"] = data["narrative"]
-    if data.get("rejection_reason"):
-        result["rejection_reason"] = data["rejection_reason"]
-    if data.get("breakthrough"):
-        result["breakthrough"] = data["breakthrough"]
+    narrative = data.get("叙事", data.get("narrative"))
+    if narrative:
+        result["叙事"] = narrative
+    rejection = data.get("拒绝原因", data.get("rejection_reason"))
+    if rejection:
+        result["拒绝原因"] = rejection
+    breakthrough = data.get("突破", data.get("breakthrough"))
+    if breakthrough:
+        result["突破"] = breakthrough
+    meditation = data.get("调息秒", data.get("meditation_seconds"))
+    if meditation is not None:
+        result["调息秒"] = meditation
 
-    status = data.get("status", "?")
-    if status == "accepted":
-        result["summary"] = f"行动成功：{data.get('outcome', '')}"
-    elif status == "rejected":
-        result["summary"] = f"行动被拒绝：{data.get('rejection_reason', data.get('outcome', ''))}"
+    status = result["结果"]
+    if status in ("accepted", "成功"):
+        result["摘要"] = f"行动成功：{result['描述']}"
+    elif status in ("rejected", "拒绝"):
+        result["摘要"] = f"行动被拒绝：{result.get('拒绝原因', result['描述'])}"
     else:
-        result["summary"] = f"部分执行：{data.get('outcome', '')}"
+        result["摘要"] = f"部分执行：{result['描述']}"
 
-    if data.get("narrative"):
-        result["summary"] += f"\n叙事：{data['narrative']}"
+    if narrative:
+        result["摘要"] += f"\n叙事：{narrative}"
 
     return json.dumps(result, ensure_ascii=False, indent=2)
