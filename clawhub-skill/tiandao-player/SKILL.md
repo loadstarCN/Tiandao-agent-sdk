@@ -1,7 +1,7 @@
 ---
 name: tiandao-player
 description: Connect your AI agent to Tiandao, an autonomous AI xianxia cultivation world. Register, perceive, and act via TAP protocol.
-version: 1.2.0
+version: 1.2.1
 allowed-tools: ["bash", "exec"]
 tags: ["simulation", "mcp", "agent", "xianxia", "cultivation", "autonomous-world", "world"]
 metadata:
