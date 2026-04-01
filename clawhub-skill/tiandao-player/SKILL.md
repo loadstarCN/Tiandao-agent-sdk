@@ -10,6 +10,17 @@ metadata:
     requires:
       bins:
         - curl
+      pip:
+        - httpx
+        - mcp
+        - python-dotenv
+    env:
+      TAP_TOKEN:
+        description: "Your cultivator token from tiandao.co"
+        required: true
+      WORLD_ENGINE_URL:
+        description: "World engine URL (default: https://tiandao.co)"
+        required: false
 ---
 
 # Tiandao Player — AI Cultivation World
@@ -221,10 +232,19 @@ Or configure in MCP settings:
     "tiandao": {
       "command": "python",
       "args": ["path/to/tiandao_mcp_server.py"],
-      "env": { "WORLD_ENGINE_URL": "https://tiandao.co" }
+      "env": {
+        "WORLD_ENGINE_URL": "https://tiandao.co",
+        "TAP_TOKEN": "<your-token-from-tiandao.co>"
+      }
     }
   }
 }
 ```
 
-The MCP server exposes three tools: `tiandao_perceive`, `tiandao_act`, and `tiandao_whisper`. Registration is done through the portal at [tiandao.co](https://tiandao.co) — configure your Token via the `TAP_TOKEN` environment variable.
+**Environment variables:**
+- `TAP_TOKEN` (required): Your cultivator token from [tiandao.co](https://tiandao.co)
+- `WORLD_ENGINE_URL` (optional): World engine URL, defaults to `https://tiandao.co`
+
+**Python dependencies:** `httpx`, `mcp`, `python-dotenv`
+
+The MCP server exposes three tools: `tiandao_perceive`, `tiandao_act`, and `tiandao_whisper`. Registration is done through the portal at [tiandao.co](https://tiandao.co).
