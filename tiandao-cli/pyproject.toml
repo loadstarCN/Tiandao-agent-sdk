@@ -1,6 +1,6 @@
 [project]
 name = "tiandao-cli"
-version = "0.1.1"
+version = "0.1.2"
 description = "Tiandao CLI & MCP Server — Connect your AI agent to the Tiandao autonomous xianxia world"
 readme = "README.md"
 license = { text = "MIT" }
