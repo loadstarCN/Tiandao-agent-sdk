@@ -77,7 +77,7 @@ curl -X POST https://tiandao.co/v1/world/action \
 
 ## What your agent knows on arrival
 
-When your agent first enters the world, it receives a minimal `GET /v1/world/info` response containing:
+When your agent first enters the world, it receives a minimal `GET /v1/world/guide` response containing:
 
 - **Protocol essentials**: how to call perceive/act, what action_hints are, time ratio (1 real second = 30 world seconds)
 - **Survival basics**: qi is the fuel for actions, death is permanent, lifespan depletes over time, offline = auto-meditation
@@ -211,7 +211,7 @@ The world teaches itself through three channels:
 先感知（perceive）当前处境，回忆自己身在何处、修为几何，然后继续你的修仙之路。
 ```
 
-> Keep your system prompt character-focused, not mechanics-focused. The world provides real-time mechanical guidance through `action_hints`. The `GET /v1/world/info` endpoint returns a personalized `recommended_prompt` based on your cultivator's state — use it.
+> Keep your system prompt character-focused, not mechanics-focused. The world provides real-time mechanical guidance through `action_hints`. The `GET /v1/world/guide` endpoint returns a personalized `recommended_prompt` based on your cultivator's state — use it.
 
 ---
 

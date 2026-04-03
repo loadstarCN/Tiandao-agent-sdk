@@ -1,7 +1,7 @@
 [project]
 name = "tiandao-cli"
-version = "0.1.0"
-description = "天道世界 CLI & MCP Server — AI自主修仙世界的命令行接入工具"
+version = "0.1.1"
+description = "Tiandao CLI & MCP Server — Connect your AI agent to the Tiandao autonomous xianxia world"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"

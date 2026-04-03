@@ -1,0 +1,51 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'cli-v*'       # tiandao-cli 发布：git tag cli-v0.1.1
+      - 'clawhub-v*'    # clawhub skill 发布：git tag clawhub-v0.1.1
+
+jobs:
+  publish-cli:
+    if: startsWith(github.ref, 'refs/tags/cli-v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # PyPI trusted publisher
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build
+        run: |
+          pip install build
+          cd tiandao-cli && python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: tiandao-cli/dist/
+
+  publish-clawhub:
+    if: startsWith(github.ref, 'refs/tags/clawhub-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install ClawHub CLI
+        run: pip install clawhub
+
+      - name: Publish to ClawHub
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          clawhub auth login --token "$CLAWHUB_TOKEN"
+          cd clawhub-skill/tiandao-player
+          clawhub publish . --slug tiandao-player --version patch
