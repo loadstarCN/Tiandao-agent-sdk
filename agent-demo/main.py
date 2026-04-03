@@ -49,7 +49,7 @@ async def run_agent():
 
     # 1. 注册
     print(f"[{AGENT_ID}] 连接天道世界 {WORLD_ENGINE_URL}...")
-    result = await tap.register(AGENT_ID, DISPLAY_NAME, BACKGROUND)
+    result = await tap.register(DISPLAY_NAME, BACKGROUND)
 
     token_key = f"WORLD_TOKEN_{AGENT_ID.upper().replace('-', '_')}"
 

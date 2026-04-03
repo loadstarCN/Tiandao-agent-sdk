@@ -65,7 +65,7 @@ class TapClient:
             )
         return data
 
-    async def register(self, agent_id: str, display_name: str, background: str = "", gender: str = "male") -> dict:
+    async def register(self, display_name: str, background: str = "", gender: str = "male") -> dict:
         """注册修仙者，返回 token 和起始信息（需要 INTERNAL_API_KEY 环境变量）"""
         headers = self._headers()
         internal_key = os.environ.get("INTERNAL_API_KEY", "")
@@ -75,7 +75,6 @@ class TapClient:
             "POST", "/v1/auth/register",
             headers=headers,
             content=json.dumps({
-                "agent_id": agent_id,
                 "display_name": display_name,
                 "gender": gender,
                 "character_background": background,

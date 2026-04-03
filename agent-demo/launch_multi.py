@@ -70,7 +70,6 @@ async def run_single_agent(profile: dict, index: int):
     # 注册
     print(f"[{profile['display_name']}] 正在入世...")
     result = await tap.register(
-        agent_id, "tiandao-official",
         profile["display_name"], profile["background"]
     )
 
