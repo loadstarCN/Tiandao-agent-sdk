@@ -45,12 +45,9 @@ except AttributeError:
     pass
 
 import httpx
-from dotenv import load_dotenv
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp import types
-
-load_dotenv()
 
 WORLD_ENGINE_URL = os.getenv("WORLD_ENGINE_URL", "https://tiandao.co").rstrip("/")
 # TAP_TOKEN 从门户注册后获取，写入环境变量
