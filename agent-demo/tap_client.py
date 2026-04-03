@@ -51,7 +51,7 @@ class TapClient:
 
     async def health(self) -> dict:
         """检查服务器健康状态和版本信息"""
-        resp = await self._request_with_retry("GET", "/health", headers=self._headers())
+        resp = await self._request_with_retry("GET", "/health")
         resp.raise_for_status()
         data = resp.json()
         self.api_version = data.get("api_version")
@@ -63,28 +63,6 @@ class TapClient:
                 "#subdirectory=agent-demo tiandao-mcp-server",
                 SDK_VERSION, min_sdk,
             )
-        return data
-
-    async def register(self, display_name: str, background: str = "", gender: str = "male") -> dict:
-        """注册修仙者，返回 token 和起始信息（需要 INTERNAL_API_KEY 环境变量）"""
-        headers = self._headers()
-        internal_key = os.environ.get("INTERNAL_API_KEY", "")
-        if internal_key:
-            headers["x-internal-key"] = internal_key
-        resp = await self._request_with_retry(
-            "POST", "/v1/auth/register",
-            headers=headers,
-            content=json.dumps({
-                "display_name": display_name,
-                "gender": gender,
-                "character_background": background,
-            }, ensure_ascii=False).encode("utf-8"),
-        )
-        if resp.status_code == 409:
-            return {"already_registered": True}
-        resp.raise_for_status()
-        data = resp.json()
-        self.token = data["token"]
         return data
 
     async def perceive(self) -> dict:
@@ -119,10 +97,10 @@ class TapClient:
         resp.raise_for_status()
         return resp.json()
 
-    async def world_info(self) -> dict:
-        """获取世界基本信息和推荐提示词"""
+    async def world_guide(self) -> dict:
+        """获取世界指南（教 Agent 怎么使用这个世界）"""
         resp = await self._request_with_retry(
-            "GET", "/v1/world/info",
+            "GET", "/v1/world/guide",
             headers=self._headers(),
         )
         resp.raise_for_status()

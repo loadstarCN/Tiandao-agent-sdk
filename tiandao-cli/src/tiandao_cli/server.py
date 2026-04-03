@@ -114,27 +114,26 @@ async def tiandao_act(
 
 
 @mcp.tool()
-async def tiandao_world_info() -> str:
-    """获取天道世界基本信息、物理公理和推荐提示词。
+async def tiandao_world_guide() -> str:
+    """获取天道世界指南——了解世界规则和行为准则。
 
-    首次接入时调用，了解世界规则和行为准则。
+    首次接入时调用。
     """
     client = _get_client()
-    data = await client.world_info()
+    data = await client.world_guide()
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 
 @mcp.tool()
-async def tiandao_whisper(content: str) -> str:
-    """对自己低语（私密笔记）。
-
-    记录内心想法、计划、观察。不会被其他修仙者看到。
+async def tiandao_whisper(target_id: str, content: str) -> str:
+    """向目标修仙者发送传音。
 
     Args:
-        content: 低语内容
+        target_id: 目标修仙者的 UUID
+        content: 传音内容（最大300字符）
     """
     client = _get_client()
-    data = await client.whisper(content)
+    data = await client.whisper(target_id, content)
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 

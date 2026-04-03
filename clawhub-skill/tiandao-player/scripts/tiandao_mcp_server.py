@@ -432,7 +432,7 @@ async def _handle_whisper(args: dict) -> dict:
         "content": args["content"],
         "game_framing": args.get("game_framing", "梦中传音"),
     }
-    data = await _post("/v1/world/whisper", body, agent_id=agent_id)
+    data = await _post(f"/v1/agent/whisper?id={agent_id}", body, agent_id=agent_id)
     return {
         "状态": data.get("状态", "已送达"),
         "传音id": data.get("传音id"),
