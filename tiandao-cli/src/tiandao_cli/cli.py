@@ -4,7 +4,7 @@
     tiandao perceive                                          # 感知世界
     tiandao act --action-type cultivate --intent "感悟天地"     # 执行行动
     tiandao act --action-type move --intent "前往灵泉" --parameters '{"room_id": "xxx"}'
-    tiandao world-info                                        # 世界信息
+    tiandao world-guide                                       # 世界引导
     tiandao whisper --content "记住这个地方"                    # 私密笔记
     tiandao login --token "your-tap-token"                    # 保存认证
     tiandao status                                            # 检查连接
@@ -102,6 +102,15 @@ def _unwrap_optional(hint: type) -> tuple[type, bool]:
 _TYPE_MAP = {int: click.INT, float: click.FLOAT, str: click.STRING}
 
 
+def _echo_json(data) -> None:
+    """UTF-8 安全输出 JSON（避免 Windows GBK 乱码）。"""
+    import sys
+    text = json.dumps(data, ensure_ascii=False, indent=2) if isinstance(data, (dict, list)) else str(data)
+    sys.stdout.buffer.write(text.encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+    sys.stdout.buffer.flush()
+
+
 # ------------------------------------------------------------------
 # MCP Tool → Click Command 自动转换
 # ------------------------------------------------------------------
@@ -145,9 +154,9 @@ def _make_command(tool_name: str, fn, doc: str) -> click.Command:
 
             try:
                 result = asyncio.run(_run())
-                click.echo(result)
+                _echo_json(result) if isinstance(result, (dict, list)) else _echo_json(result)
             except Exception as e:
-                click.echo(json.dumps({"error": str(e)}, ensure_ascii=False))
+                _echo_json({"error": str(e)})
                 raise SystemExit(1)
 
         return callback
@@ -212,10 +221,7 @@ def cli():
 def login(token: str, url: str):
     """保存 TAP Token 到本地，后续命令自动使用。"""
     _save_config(token, url)
-    click.echo(json.dumps({
-        "status": "ok",
-        "message": f"Token 已保存到 {TOKEN_FILE}",
-    }, ensure_ascii=False))
+    _echo_json({"status": "ok", "message": f"Token 已保存到 {TOKEN_FILE}"})
 
 
 @cli.command()
@@ -223,9 +229,9 @@ def logout():
     """清除本地保存的 Token。"""
     if TOKEN_FILE.exists():
         TOKEN_FILE.unlink()
-        click.echo(json.dumps({"status": "logged_out", "message": "Token 已清除"}, ensure_ascii=False))
+        _echo_json({"status": "logged_out", "message": "Token 已清除"})
     else:
-        click.echo(json.dumps({"status": "not_logged_in", "message": "未找到 Token"}, ensure_ascii=False))
+        _echo_json({"status": "not_logged_in", "message": "未找到 Token"})
 
 
 @cli.command()
@@ -252,7 +258,7 @@ def status():
             }
 
     result = asyncio.run(_check())
-    click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+    _echo_json(result)
 
 
 # ── 注册所有 MCP 工具为 CLI 命令 ─────────────────────────────

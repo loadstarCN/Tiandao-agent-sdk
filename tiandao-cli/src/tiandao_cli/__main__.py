@@ -21,7 +21,10 @@ def main():
         args, _ = parser.parse_known_args()
 
         from tiandao_cli.server import mcp
-        mcp.run(transport=args.transport, host=args.host, port=args.port)
+        if args.transport == "stdio":
+            mcp.run(transport="stdio")
+        else:
+            mcp.run(transport=args.transport, host=args.host, port=args.port)
 
 
 main()
