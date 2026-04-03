@@ -61,8 +61,8 @@ class TAPClient:
             body["reasoning_summary"] = reasoning
         return await self.post("/v1/world/action", body)
 
-    async def world_info(self) -> dict:
-        return await self.get("/v1/world/info")
+    async def world_guide(self) -> dict:
+        return await self.get("/v1/world/guide")
 
-    async def whisper(self, content: str) -> dict:
-        return await self.post("/v1/world/whisper", {"content": content})
+    async def whisper(self, target_id: str, content: str) -> dict:
+        return await self.post(f"/v1/agent/whisper?id={target_id}", {"content": content})
