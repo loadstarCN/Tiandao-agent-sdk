@@ -47,5 +47,6 @@ jobs:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
           clawhub auth login --token "$CLAWHUB_TOKEN"
+          VERSION="${GITHUB_REF#refs/tags/clawhub-v}"
           cd clawhub-skill/tiandao-player
-          clawhub publish . --slug tiandao-player --version patch
+          clawhub publish . --slug tiandao-player --version "$VERSION"
