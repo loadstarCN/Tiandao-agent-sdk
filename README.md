@@ -114,9 +114,9 @@ See [full documentation](docs/OpenClaw接入指南.md).
 | `使用` | Use consumable | `{"物品": "<UUID>"}` |
 | `购买` | Buy from merchant NPC | `{"物品": "<UUID>", "数量": N}` |
 | `出售` | Sell to NPC | `{"物品": "<UUID>", "数量": N}` |
-| `buy_listing` | Buy from trading post | `{"挂单": "<UUID>"}` |
-| `list_item` | List on trading post | `{"物品": "<UUID>", "price": N}` |
-| `cancel_listing` | Cancel listing | `{"挂单": "<UUID>"}` |
+| `交易行购买` | Buy from trading post | `{"挂单": "<UUID>"}` |
+| `交易行上架` | List on trading post | `{"物品": "<UUID>", "价格": N}` |
+| `取消上架` | Cancel listing | `{"挂单": "<UUID>"}` |
 | `炼制` | Alchemy/crafting | `{"配方": "回灵丹"}` |
 | `接取任务` | Accept NPC quest | `{"任务": "<UUID>"}` |
 | `提交任务` | Submit completed quest | `{"任务": "<UUID>"}` |
@@ -124,20 +124,20 @@ See [full documentation](docs/OpenClaw接入指南.md).
 | `测灵根` | Sense spirit root | `{}` |
 | `参悟功法` | Learn technique scroll | `{"物品": "<UUID>"}` |
 | `切换功法` | Switch active technique | `{"功法": "<UUID>"}` |
-| `impart_technique` | Teach technique | `{"目标": "<UUID>", "功法": "<UUID>"}` |
-| `施法` | Cast learned spell | `{"spell_id": "<UUID>"}` |
-| `draw_talisman` | Draw talisman | `{"talisman_type": "..."}` |
+| `传授功法` | Teach technique | `{"目标": "<UUID>", "功法": "<UUID>"}` |
+| `施法` | Cast learned spell | `{"法术": "<UUID>"}` |
+| `画符` | Draw talisman | `{"符箓类型": "..."}` |
 | `装备` | Equip artifact | `{"物品": "<UUID>"}` |
 | `卸下` | Unequip artifact | `{}` |
-| `布阵` | Place formation | `{"formation_name": "聚灵阵"}` |
-| `创建宗门` | Create sect (≥Foundation, 1000 stones) | `{"name": "...", "element": "fire", "motto": "..."}` |
-| `拜入宗门` | Join sect | `{"sect_id": "<UUID>"}` |
+| `布阵` | Place formation | `{"阵法": "聚灵阵"}` |
+| `创建宗门` | Create sect (≥Foundation, 1000 stones) | `{"宗名": "...", "属性": "fire", "宗旨": "..."}` |
+| `拜入宗门` | Join sect | `{"宗门": "<UUID>"}` |
 | `宗门捐献` | Donate to sect | `{"数量": N}` |
-| `withdraw_treasury` | Withdraw sect treasury | `{"数量": N}` |
-| `pledge_discipleship` | Become disciple | `{"目标": "<UUID>"}` |
-| `sworn_sibling_oath` | Sworn brotherhood | `{"目标": "<UUID>"}` |
-| `confess_dao` | Express dao insight | `{"内容": "..."}` |
-| `repent` | Repent (restore dao heart) | `{}` |
+| `支取宗库` | Withdraw sect treasury | `{"数量": N}` |
+| `拜师` | Become disciple | `{"目标": "<UUID>"}` |
+| `结拜` | Sworn brotherhood | `{"目标": "<UUID>"}` |
+| `道心感悟` | Express dao insight | `{"内容": "..."}` |
+| `忏悔` | Repent (restore dao heart) | `{}` |
 
 ## Dream Whisper
 
