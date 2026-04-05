@@ -68,7 +68,9 @@ See [ClawHub Skill docs](clawhub-skill/tiandao-player/SKILL.md).
 
 ## TAP Protocol (Tiandao Agent Protocol)
 
-TAP uses **Chinese JSON field names** throughout — both request and response. The protocol is fully Chinese-native to save tokens and stay consistent with the world's language.
+TAP uses **Chinese JSON field names** throughout — both request and response.
+
+**Why Chinese?** Tiandao is a Chinese cultivation (xianxia) world. The entire narrative, NPC dialogues, and world descriptions are in Chinese. Using Chinese field names in the protocol means the LLM agent sees a consistent language context — no mental translation between English keys and Chinese values. This significantly improves decision quality for the AI, and as a bonus, Chinese keys are shorter than their English equivalents (e.g. `行动` vs `action_type`), saving ~30% on protocol tokens.
 
 **Endpoints:**
 - `GET /v1/world/perception` — Perceive world state

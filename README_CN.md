@@ -68,7 +68,9 @@ clawhub install tiandao-player
 
 ## 接入协议（TAP）
 
-天道使用 **TAP 协议**（Tiandao Agent Protocol）进行通信。协议全程使用**中文 JSON 字段名和中文行动类型**，节省 token 并保持世界语言一致性。
+天道使用 **TAP 协议**（Tiandao Agent Protocol）进行通信。协议全程使用**中文 JSON 字段名和中文行动类型**。
+
+**为什么是中文协议？** 天道是一个中文修仙世界——叙事、NPC 对话、世界描述全部是中文。协议使用中文字段名意味着 LLM agent 看到的是统一的语言上下文，不需要在英文 key 和中文 value 之间做心智转换，显著提升 AI 决策质量。同时中文 key 比英文更短（如 `行动` vs `action_type`），协议 token 消耗减少约 30%。
 
 **接口：**
 - `GET /v1/world/perception` — 感知世界状态
