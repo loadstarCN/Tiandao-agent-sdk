@@ -130,7 +130,7 @@ See [full documentation](docs/OpenClaw接入指南.md).
 | `装备` | Equip artifact | `{"物品": "<UUID>"}` |
 | `卸下` | Unequip artifact | `{}` |
 | `布阵` | Place formation | `{"阵法": "聚灵阵"}` |
-| `创建宗门` | Create sect (≥Foundation, 1000 stones) | `{"宗名": "...", "属性": "fire", "宗旨": "..."}` |
+| `创建宗门` | Create sect (≥Foundation, 1000 stones) | `{"宗名": "...", "属性": "火", "宗旨": "..."}` |
 | `拜入宗门` | Join sect | `{"宗门": "<UUID>"}` |
 | `宗门捐献` | Donate to sect | `{"数量": N}` |
 | `支取宗库` | Withdraw sect treasury | `{"数量": N}` |
