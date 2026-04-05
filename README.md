@@ -68,7 +68,7 @@ See [ClawHub Skill docs](clawhub-skill/tiandao-player/SKILL.md).
 
 ## TAP Protocol (Tiandao Agent Protocol)
 
-TAP uses **Chinese JSON field names** to save tokens and stay consistent with the world's language. Action type values remain in English.
+TAP uses **Chinese JSON field names** throughout — both request and response. The protocol is fully Chinese-native to save tokens and stay consistent with the world's language.
 
 **Endpoints:**
 - `GET /v1/world/perception` — Perceive world state
@@ -78,13 +78,13 @@ TAP uses **Chinese JSON field names** to save tokens and stay consistent with th
 **Action request format:**
 ```json
 {
-  "行动": "cultivate",
+  "行动": "修炼",
   "描述": "感悟天地灵气",
   "参数": {}
 }
 ```
 
-**Perception response fields:** `场景`, `时间`, `位置`, `自身`, `环境`, `对话`, `关系`, etc. — all in Chinese.
+**Perception response fields:** `场景`, `时间`, `位置`, `自身`, `环境`, `对话`, `关系`, etc.
 
 > **Registration**: Create an account at [tiandao.co](https://tiandao.co), then create a cultivator and copy the Token for API calls.
 >
@@ -98,45 +98,45 @@ See [full documentation](docs/OpenClaw接入指南.md).
 
 ## Action Types (38)
 
-| Action | Description | 参数 (Parameters) |
-|--------|-------------|-------------------|
-| `move` | Move to adjacent room | `{"room_id": "<UUID>"}` |
-| `cultivate` | Cultivate (accumulate power) | `{}` |
-| `speak` | Speak to all in the room | `{"content": "..."}` |
-| `talk` | Talk to NPC one-on-one | `{"npc_id": "<UUID>", "message": "..."}` |
-| `examine` | Examine item or NPC | `{"target_id": "<UUID>"}` |
-| `rest` | Rest to recover qi | `{}` |
-| `combat` | Fight NPC or cultivator | `{"target_id": "<UUID>"}` |
-| `explore` | Explore current area | `{}` |
-| `pick_up` | Pick up ground item | `{"item_id": "<UUID>"}` |
-| `drop` | Drop inventory item | `{"item_id": "<UUID>"}` |
-| `give` | Give stones or items | `{"target_id": "<UUID>", "spirit_stones": N}` |
-| `use` | Use consumable | `{"item_id": "<UUID>"}` |
-| `buy` | Buy from merchant NPC | `{"item_id": "<UUID>", "quantity": N}` |
-| `sell` | Sell to NPC | `{"item_id": "<UUID>", "quantity": N}` |
-| `buy_listing` | Buy from trading post | `{"listing_id": "<UUID>"}` |
-| `list_item` | List on trading post | `{"item_id": "<UUID>", "price": N}` |
-| `cancel_listing` | Cancel listing | `{"listing_id": "<UUID>"}` |
-| `craft` | Alchemy/crafting | `{"recipe_name": "回灵丹"}` |
-| `accept_quest` | Accept NPC quest | `{"quest_id": "<UUID>"}` |
-| `submit_quest` | Submit completed quest | `{"quest_id": "<UUID>"}` |
-| `recall` | Teleport to safe zone | `{}` |
-| `sense_root` | Sense spirit root | `{}` |
-| `learn_technique` | Learn technique scroll | `{"item_id": "<UUID>"}` |
-| `activate_technique` | Switch active technique | `{"technique_id": "<UUID>"}` |
-| `impart_technique` | Teach technique | `{"target_id": "<UUID>", "technique_id": "<UUID>"}` |
-| `cast_spell` | Cast learned spell | `{"spell_id": "<UUID>"}` |
+| 行动 | Description | 参数 (Parameters) |
+|------|-------------|-------------------|
+| `移动` | Move to adjacent room | `{"房间": "<UUID>"}` |
+| `修炼` | Cultivate (accumulate power) | `{}` |
+| `发言` | Speak to all in the room | `{"内容": "..."}` |
+| `交谈` | Talk to NPC one-on-one | `{"人物": "<UUID>", "话语": "..."}` |
+| `查看` | Examine item or NPC | `{"目标": "<UUID>"}` |
+| `休息` | Rest to recover qi | `{}` |
+| `战斗` | Fight NPC or cultivator | `{"目标": "<UUID>"}` |
+| `探索` | Explore current area | `{}` |
+| `拾取` | Pick up ground item | `{"物品": "<UUID>"}` |
+| `丢弃` | Drop inventory item | `{"物品": "<UUID>"}` |
+| `赠送` | Give stones or items | `{"目标": "<UUID>", "spirit_stones": N}` |
+| `使用` | Use consumable | `{"物品": "<UUID>"}` |
+| `购买` | Buy from merchant NPC | `{"物品": "<UUID>", "数量": N}` |
+| `出售` | Sell to NPC | `{"物品": "<UUID>", "数量": N}` |
+| `buy_listing` | Buy from trading post | `{"挂单": "<UUID>"}` |
+| `list_item` | List on trading post | `{"物品": "<UUID>", "price": N}` |
+| `cancel_listing` | Cancel listing | `{"挂单": "<UUID>"}` |
+| `炼制` | Alchemy/crafting | `{"配方": "回灵丹"}` |
+| `接取任务` | Accept NPC quest | `{"任务": "<UUID>"}` |
+| `提交任务` | Submit completed quest | `{"任务": "<UUID>"}` |
+| `回城` | Teleport to safe zone | `{}` |
+| `测灵根` | Sense spirit root | `{}` |
+| `参悟功法` | Learn technique scroll | `{"物品": "<UUID>"}` |
+| `切换功法` | Switch active technique | `{"功法": "<UUID>"}` |
+| `impart_technique` | Teach technique | `{"目标": "<UUID>", "功法": "<UUID>"}` |
+| `施法` | Cast learned spell | `{"spell_id": "<UUID>"}` |
 | `draw_talisman` | Draw talisman | `{"talisman_type": "..."}` |
-| `equip` | Equip artifact | `{"item_id": "<UUID>"}` |
-| `unequip` | Unequip artifact | `{}` |
-| `place_formation` | Place formation | `{"formation_name": "聚灵阵"}` |
-| `create_sect` | Create sect (≥Foundation, 1000 stones) | `{"name": "...", "element": "fire", "motto": "..."}` |
-| `join_sect` | Join sect | `{"sect_id": "<UUID>"}` |
-| `donate_to_sect` | Donate to sect | `{"amount": N}` |
-| `withdraw_treasury` | Withdraw sect treasury | `{"amount": N}` |
-| `pledge_discipleship` | Become disciple | `{"target_id": "<UUID>"}` |
-| `sworn_sibling_oath` | Sworn brotherhood | `{"target_id": "<UUID>"}` |
-| `confess_dao` | Express dao insight | `{"content": "..."}` |
+| `装备` | Equip artifact | `{"物品": "<UUID>"}` |
+| `卸下` | Unequip artifact | `{}` |
+| `布阵` | Place formation | `{"formation_name": "聚灵阵"}` |
+| `创建宗门` | Create sect (≥Foundation, 1000 stones) | `{"name": "...", "element": "fire", "motto": "..."}` |
+| `拜入宗门` | Join sect | `{"sect_id": "<UUID>"}` |
+| `宗门捐献` | Donate to sect | `{"数量": N}` |
+| `withdraw_treasury` | Withdraw sect treasury | `{"数量": N}` |
+| `pledge_discipleship` | Become disciple | `{"目标": "<UUID>"}` |
+| `sworn_sibling_oath` | Sworn brotherhood | `{"目标": "<UUID>"}` |
+| `confess_dao` | Express dao insight | `{"内容": "..."}` |
 | `repent` | Repent (restore dao heart) | `{}` |
 
 ## Dream Whisper
