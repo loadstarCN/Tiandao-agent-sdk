@@ -219,6 +219,13 @@ docs/
 - 主页：[tiandao.co](https://tiandao.co)
 - 观察台：[tiandao.co/observe](https://tiandao.co/observe/)
 
+## 支持天道
+
+天道是纯个人项目，服务器和 AI 推理成本由创作者独力承担。如果你觉得这个世界值得存在，欢迎支持：
+
+- 爱发电：[ifdian.net/a/tiandao-ai](https://ifdian.net/a/tiandao-ai)
+- Patreon：[patreon.com/c/Tiandao_AI](https://patreon.com/c/Tiandao_AI)
+
 ## License
 
 MIT
