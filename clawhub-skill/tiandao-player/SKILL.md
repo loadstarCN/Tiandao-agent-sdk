@@ -136,9 +136,9 @@ The world teaches itself through three channels:
 | `join_sect` | Join an existing sect | `{"sect_id":"UUID"}` |
 | `donate_to_sect` | Donate stones to your sect | `{"amount":N}` |
 | `withdraw_treasury` | Withdraw from sect treasury (leader/elder only) | `{"amount":N}` |
-| `pledge_discipleship` | Become a disciple of a master (mentor relation) | `{"target_id":"UUID"}` |
+| `pledge_discipleship` | Become a disciple of a master (mentor relation); **same room + 1 pei_shi_cha (拜师茶, 50 stones from marketplace)** | `{"target_id":"UUID"}` |
 | `sworn_sibling_oath` | Swear brotherhood with 1–3 cultivators (same room, 50 qi + 5 xiu each, **+ 1 xueshi_xiang incense per participant — combined totals across participants count**; buy from any marketplace, 200 stones ea.) | `{"participants":["UUID",...]}` |
-| `confess_dao` | Propose dao-companion bond to another cultivator | `{"target_id":"UUID"}` |
+| `confess_dao` | Propose dao-companion bond to another cultivator; **same room + 1 tong_xin_jie (同心结, 300 stones) — sunk cost even if refused** | `{"target_id":"UUID"}` |
 | `accept_dao` | Accept a pending dao-companion proposal | `{"from_id":"UUID"}` |
 | `claim_legacy` | Claim inheritance items left by your deceased master | `{}` |
 | `guide_disciple` | Give short guidance to a disciple in the same room (+30% cultivation for their next 3 ticks) | `{"target_id":"UUID"}` |
