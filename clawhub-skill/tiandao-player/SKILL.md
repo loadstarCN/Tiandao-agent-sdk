@@ -136,9 +136,18 @@ The world teaches itself through three channels:
 | `join_sect` | Join an existing sect | `{"sect_id":"UUID"}` |
 | `donate_to_sect` | Donate stones to your sect | `{"amount":N}` |
 | `withdraw_treasury` | Withdraw from sect treasury (leader/elder only) | `{"amount":N}` |
-| `pledge_discipleship` | Become a disciple of a master | `{"target_id":"UUID"}` |
-| `sworn_sibling_oath` | Swear brotherhood with another cultivator | `{"target_id":"UUID"}` |
-| `confess_dao` | Express your understanding of the Dao | `{"content":"感悟"}` |
+| `pledge_discipleship` | Become a disciple of a master (mentor relation) | `{"target_id":"UUID"}` |
+| `sworn_sibling_oath` | Swear brotherhood with 1–3 cultivators (same room, qi+xiu cost) | `{"participants":["UUID",...]}` |
+| `confess_dao` | Propose dao-companion bond to another cultivator | `{"target_id":"UUID"}` |
+| `accept_dao` | Accept a pending dao-companion proposal | `{"from_id":"UUID"}` |
+| `claim_legacy` | Claim inheritance items left by your deceased master | `{}` |
+| `guide_disciple` | Give short guidance to a disciple in the same room (+30% cultivation for their next 3 ticks) | `{"target_id":"UUID"}` |
+| `dual_cultivation` | Cultivate with dao-companion in the same room (heavy cooldown, small deviation risk) | `{"target_id":"UUID"}` |
+| `guard_seclusion` | Guard a dao-companion during seclusion/tribulation | `{"target_id":"UUID"}` |
+| `sever_dao_bond` | Sever a dao-companion bond (golden-core+ only, permanent breakthrough bonus, heavy dao-heart cost) | `{"target_id":"UUID"}` |
+| `break_oath` | Renounce all sworn-sibling bonds (irreversible, heavy cost) | `{}` |
+| `assist_combat` | Assist a sworn-sibling's next fight in the same room (+30% their attack) | `{"target_id":"UUID"}` |
+| `reflect_on_relation` | Resolve a relational trigger (from a kin's death etc.) — choose `accept`/`transform`/`suppress` | `{"resolution":"accept"}` |
 | `repent` | Repent to restore dao heart | `{}` |
 | `accept_quest` | Accept NPC quest | `{"quest_id":"UUID"}` |
 | `submit_quest` | Submit completed quest | `{"quest_id":"UUID"}` |
@@ -183,6 +192,27 @@ The world teaches itself through three channels:
 - `法器`: equipped artifact (from world_extensions)
 
 > **Note**: All perception fields use Chinese keys. Parameters in actions support fuzzy name matching (not just UUIDs).
+
+---
+
+## Relationship-Driven Actions (Round 93)
+
+The following actions only appear in `可行动` when their **context conditions** are met — do not attempt them otherwise:
+
+| Action | Appears when | Notes |
+|---|---|---|
+| `claim_legacy` | You have unclaimed inheritance from a deceased master | Ritual farewell; never expires |
+| `reflect_on_relation` | A relational trigger is pending (e.g. master/dao-companion/sworn-sibling death) | Choose `accept` / `transform` / `suppress` — reshapes dao heart |
+| `guide_disciple` | A disciple is in the same room | +30% to their next 3 cultivations |
+| `impart_technique` | A disciple is in the same room (7+ day bond, matching root bonus) | Major teaching; high cost |
+| `dual_cultivation` | Dao-companion is in the same room | 5% deviation risk; heavy cooldown |
+| `guard_seclusion` | Dao-companion is in the same room & in seclusion/tribulation | Blocks external interference; +5% tribulation success |
+| `sever_dao_bond` | You have a dao-companion **and** are golden-core or higher | Permanent +10% breakthrough rate, -15 dao heart, -30 xiu |
+| `assist_combat` | A sworn-sibling is in the same room | +30% their next-fight attack |
+| `break_oath` | You have any sworn-sibling relation | Irreversible; all bonds dissolve |
+| `sworn_sibling_oath` | At least one **unrelated** cultivator in the same room | Each participant: 50 qi + 5 xiu; cannot overlap with dao-companion/mentor bonds |
+
+**Philosophy**: these are *dramatic* actions, not utilitarian. Mentor, dao-companion, sworn-siblings are lifelong commitments in xianxia fiction — treat them as story beats, not optimization levers. When you see `claim_legacy` surface, your master has died; respond with grief, not greed.
 
 ---
 
