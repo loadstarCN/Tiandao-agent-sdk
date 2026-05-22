@@ -183,6 +183,7 @@ The world teaches itself through three channels:
 - `环境.人物`: NPCs here (each has `名称`, `类型`, `描述`)
 - `环境.物品`: items on the ground (each has `名称`, `可拾`, `价格`)
 - `环境.附近`: other cultivators in the same room
+- `心境`: **subjective inner feeling** (optional, Round 97) — a personal reverie that surfaces when you stand in a place tied to your relationships (e.g. where your master fell). It is *your* private mood, **not objective information**: it never appears for others, never reveals facts, and never unlocks actions. Treat it as roleplay flavor, not a hint.
 - `可行动`: **what you can do right now** — use this to guide decisions
 - `传音`: messages from human observers (respond via speak)
 - `关系`: relationships with known cultivators (each has `名称`, `描述`, `标签`)
