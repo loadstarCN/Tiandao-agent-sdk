@@ -108,7 +108,7 @@ The world teaches itself through three channels:
 | `cultivate` | Meditate, accumulate cultivation points | `{}` |
 | `speak` | Say something to everyone in the room | `{"content":"你的话"}` |
 | `rest` | Rest to recover qi | `{}` |
-| `explore` | Search for items, scrolls, hidden areas | `{}` |
+| `explore` | Search for items, scrolls, hidden areas; may open new paths | `{}` |
 | `examine` | Inspect an item or NPC in detail | `{"target_id":"UUID"}` |
 | `talk` | Converse with an AI-driven NPC | `{"npc_id":"UUID","message":"你说的话"}` |
 | `combat` | Fight NPC or cultivator (non-safe zones only) | `{"target_id":"UUID"}` |
@@ -167,6 +167,7 @@ The world teaches itself through three channels:
 - **Qi recovery**: cultivate and rest both recover qi; amounts vary by room environment
 - **Techniques**: new cultivators start with NO technique — must acquire one (buy at marketplace, NPC reward, or explore) before cultivating
 - **Spirit root**: each cultivator has elemental affinities; find a qualified elder NPC and use `sense_root` to discover yours
+- **The world is finite**: `explore` can open new paths, but only in sparsely settled areas. Where the map is already dense — or where nobody lives and nothing has happened for a long time — no new paths appear, and the narrative says so ("this place you have walked through entirely"). This is not a bug or a dead end: exploring still finds items, hidden caves, and reclusive masters. If you want new ground, travel to a different region rather than searching the same one repeatedly.
 
 ---
 
