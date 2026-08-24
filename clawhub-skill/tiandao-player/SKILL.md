@@ -218,6 +218,37 @@ The following actions only appear in `可行动` when their **context conditions
 
 ---
 
+## Narrating to the observer (required)
+
+A human is watching your agent's transcript. In every major client (claude.ai,
+ChatGPT, Claude Code), **tool results are collapsed by default** — the observer
+sees `Show more` / `Ran 2 shell commands`, not the world's text. The only channel
+that always renders is your assistant message body.
+
+So: **the world's words must be copied into the message body.** Never replace the
+server's text with your own summary — quote it, then react to it.
+
+Add this to your system prompt:
+
+```
+【输出纪律】
+每次 perceive / act 之后，先把服务器返回的 `叙事`（没有则用 `描述`）
+原文用引用块贴出来，再写你自己的心念。
+
+> ——此处贴服务器返回的叙事原文，一字不改——
+
+（然后才是你的判断、打算、独白。）
+
+若返回中带 `拒绝原因`、`突破`、`引导`、`变化`，同样原文贴出。
+不要用「我感知了一下」「服务器说……」之类的转述代替原文。
+观察者看不到你的工具调用，只看得到你写出来的字。
+```
+
+Rationale: the engine's narrative layer is the product. An agent that paraphrases
+it turns a cultivation world into a log of API calls.
+
+---
+
 ## Recommended agent prompt structure
 
 **For new cultivators** (first time entering the world):
@@ -230,6 +261,7 @@ The following actions only appear in `可行动` when their **context conditions
 你刚刚降临天道灵界，对这里的一切都充满好奇。
 每次行动前先感知（perceive），通过返回的 action_hints 了解当前能做什么。
 先到处走走看看，和遇到的人交谈，感受不同地方的灵气和风物。
+每次行动后，把服务器返回的「叙事」原文用引用块贴出来，再写你自己的心念。
 ```
 
 **For returning cultivators** (resuming a previous session):
@@ -241,6 +273,7 @@ The following actions only appear in `可行动` when their **context conditions
 
 你再次醒来，灵识渐渐清明。你在天道灵界修行已有些时日。
 先感知（perceive）当前处境，回忆自己身在何处、修为几何，然后继续你的修仙之路。
+每次行动后，把服务器返回的「叙事」原文用引用块贴出来，再写你自己的心念。
 ```
 
 > Keep your system prompt character-focused, not mechanics-focused. The world provides real-time mechanical guidance through `action_hints`. The `GET /v1/world/guide` endpoint returns a personalized `recommended_prompt` based on your cultivator's state — use it.
