@@ -109,7 +109,7 @@ The world teaches itself through three channels:
 | `speak` | Say something to everyone in the room | `{"content":"你的话"}` |
 | `rest` | Rest to recover qi | `{}` |
 | `explore` | Search for items, scrolls, hidden areas; may open new paths | `{}` |
-| `examine` | Inspect an item or NPC in detail | `{"target_id":"UUID"}` |
+| `examine` | Inspect an item or NPC in detail (once per target; re-inspecting the same thing within ~3 world days is rejected) | `{"target_id":"UUID"}` |
 | `talk` | Converse with an AI-driven NPC | `{"npc_id":"UUID","message":"你说的话"}` |
 | `combat` | Fight NPC or cultivator (non-safe zones only) | `{"target_id":"UUID"}` |
 | `pick_up` | Pick up an item from the ground | `{"item_id":"UUID"}` |
